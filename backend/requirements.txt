@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic[email]
+motor
+PyJWT
+passlib[argon2]
+python-multipart
+websockets
+google-generativeai
+cloudinary
+python-dotenv
