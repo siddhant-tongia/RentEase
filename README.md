@@ -131,6 +131,30 @@ Managing rental properties through scattered spreadsheets, WhatsApp messages, an
 
 ---
 
+## 📁 Repository Structure
+
+```text
+RentEase-repo/
+├── backend/                  # FastAPI Python backend
+│   └── .env.example          # Environment variables template
+├── docs/                     # Project documentation
+│   ├── SRS.md                # Software Requirements Specification
+│   ├── User-Stories.md       # User stories and acceptance criteria
+│   └── UML-Diagrams/         # System architecture and design diagrams
+│       ├── 1_UseCase_Diagram.excalidraw
+│       ├── 2_Class_Diagram.excalidraw
+│       ├── 3_Sequence_Diagram.excalidraw
+│       ├── 4_Activity_Diagram.excalidraw
+│       ├── 5_Component_Diagram.excalidraw
+│       └── 6_StateChart_Diagram.excalidraw
+├── frontend/                 # React frontend application
+│   └── .gitkeep              # Placeholder for frontend setup
+├── .gitignore                # Git ignore rules
+└── README.md                 # Project overview and setup instructions
+```
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -221,6 +245,7 @@ npm run dev
 | Document | Description |
 |---|---|
 | [Software Requirements Specification (SRS)](docs/SRS.md) | Complete IEEE 830-1998 compliant SRS document |
+| [User Stories](docs/User-Stories.md) | User stories with acceptance criteria for all features |
 | [UML Diagrams](docs/UML-Diagrams/) | System architecture and design diagrams |
 
 ### UML Diagrams
@@ -234,6 +259,7 @@ npm run dev
 | Sequence Diagram | [`3_Sequence_Diagram.excalidraw`](docs/UML-Diagrams/3_Sequence_Diagram.excalidraw) | Critical flow interactions (Auth, Payment, Maintenance) |
 | Activity Diagram | [`4_Activity_Diagram.excalidraw`](docs/UML-Diagrams/4_Activity_Diagram.excalidraw) | Process workflows for payment and maintenance |
 | Component Diagram | [`5_Component_Diagram.excalidraw`](docs/UML-Diagrams/5_Component_Diagram.excalidraw) | System architecture and component dependencies |
+| State Chart Diagram | [`6_StateChart_Diagram.excalidraw`](docs/UML-Diagrams/6_StateChart_Diagram.excalidraw) | Entity lifecycles: User, Property, Payment, Maintenance, Notification |
 
 ---
 
