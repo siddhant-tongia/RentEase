@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentEase - Home</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .auth-card {
+      display: none;
+    }
+    .auth-card.active {
+      display: block;
+    }
+    .form-toggle-text {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .form-toggle-text a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .form-toggle-text a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="brand">RentEase</a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="pages/dashboard.html">Dashboard</a>
+        <a href="pages/properties.html">Properties</a>
+        <a href="pages/rent.html">Rent</a>
+        <a href="pages/maintenance.html">Maintenance</a>
+        <button class="btn btn-secondary" onclick="openAuth('login')">Login</button>
+        <button class="btn btn-primary" onclick="openAuth('register')">Register</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <div class="alert alert-error" style="display: none;">Something went wrong. Please check your details and try again.</div>
+    <div class="alert alert-success" style="display: none;">Changes saved successfully.</div>
+
+    <section id="home" class="section">
+      <h1>RentEase</h1>
+      <p class="subtitle">A simple platform to handle your properties, track rent payments, and clear maintenance requests.</p>
+      
+      <div class="grid grid-2">
+        <div class="card">
+          <h2>Property Owners</h2>
+          <ul>
+            <li>Track open and filled units</li>
+            <li>Keep tabs on rent status</li>
+            <li>Manage maintenance tickets</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>Tenants</h2>
+          <ul>
+            <li>Check lease and property details</li>
+            <li>View upcoming rent due dates</li>
+            <li>Submit quick repair requests</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="auth-section" class="section">
+      
+      <div id="login-card" class="form-container auth-card active">
+        <h2>Log In</h2>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" name="email" placeholder="Enter Email Address" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" name="password" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Log In</button>
+        </form>
+        <p class="form-toggle-text">
+          Don't have an account? <a href="javascript:void(0)" onclick="toggleAuth('register')">Create an account</a>
+        </p>
+      </div>
+
+      <div id="register-card" class="form-container auth-card">
+        <h2>Create an Account</h2>
+        <form id="register-form">
+          <div class="form-group">
+            <label for="reg-name">Full Name</label>
+            <input type="text" id="reg-name" name="name" placeholder="Enter Full Name" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Email Address</label>
+            <input type="email" id="reg-email" name="email" placeholder="Enter Email Address" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password" name="password" placeholder="••••••••" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="reg-role">Role</label>
+            <select id="reg-role" name="role" required>
+              <option value="tenant">Tenant</option>
+              <option value="owner">Owner</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Register</button>
+        </form>
+        <p class="form-toggle-text">
+          Already have an account? <a href="javascript:void(0)" onclick="toggleAuth('login')">Log In</a>
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="js/auth-toggle.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
