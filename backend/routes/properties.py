@@ -6,13 +6,14 @@ from database.connection import database
 
 router = APIRouter()
 
-property_collection = database["properties"]
+properties_collection = database["properties"]
 
 class PropertyCreateResponse(BaseModel):
     message : str
     property_id : str
 
-@router.post("/api/properties",status_code=status.HTTP_401_UNAUTHORIZED,response_model=PropertyCreateResponse)
+
+@router.post("/api/properties",status_code=status.HTTP_201_CREATED,response_model=PropertyCreateResponse)
 async def create_property(property_data : PropertyCreate,current_user : dict = Depends(get_current_user)):
     if current_user["role"] != "owner":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owner can create properties")
@@ -27,9 +28,27 @@ async def create_property(property_data : PropertyCreate,current_user : dict = D
         "description": property_data.description
     }
 
-    result = await property_collection.insert_one(property_document)
+    result = await properties_collection.insert_one(property_document)
 
     return {
         "message": "Property created successfully",
         "property_id": str(result.inserted_id)
     }
+
+@router.get("/api/properties")
+async def view_properties(current_user : dict = Depends(get_current_user)):
+    if current_user["role"] != "owner":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owner can see their properties")
+
+    owner_id = current_user["user_id"]
+
+    cursor = properties_collection.find({"owner_id":owner_id})
+    result = await cursor.to_list(length=None)
+
+    for property_item in result:
+        property_item["property_id"] = str(property_item["_id"])
+        del property_item["_id"]
+
+    return result
+    
+    
