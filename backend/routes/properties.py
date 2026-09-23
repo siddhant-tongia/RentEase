@@ -74,5 +74,37 @@ async def view_property(property_id : str,current_user : dict = Depends(get_curr
     del result["_id"] 
 
     return result
-    
-    
+
+@router.put("/api/properties/{property_id}",status_code=status.HTTP_200_OK,response_model=PropertyCreateResponse)
+async def update_property(property_id : str,updated_property : PropertyCreate,current_user : dict = Depends(get_current_user)):
+    if current_user["role"] != "owner":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owner can make changes")
+
+    try:
+        _id = ObjectId(property_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid property ID")
+
+    owner_id = current_user["user_id"]
+
+    updated_property_document = {
+        "title": updated_property.title,
+        "address": updated_property.address,
+        "property_type": updated_property.property_type,
+        "monthly_rent": updated_property.monthly_rent,
+        "availability": updated_property.availability,
+        "description": updated_property.description
+    }
+
+    result = await properties_collection.update_one({"_id":_id,"owner_id":owner_id},{"$set":updated_property_document})
+
+    if result.matched_count == 0 :
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No such property found")
+
+    return{
+        "message":"Updated the property successfully",
+        "property_id": str(_id)
+    }
+
+
+
