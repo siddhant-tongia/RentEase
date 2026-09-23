@@ -106,5 +106,25 @@ async def update_property(property_id : str,updated_property : PropertyCreate,cu
         "property_id": str(_id)
     }
 
+@router.delete("/api/properties/{property_id}",status_code=status.HTTP_200_OK,response_model=PropertyCreateResponse)
+async def delete_property(property_id : str,current_user : dict = Depends(get_current_user)):
+    if current_user["role"] != "owner":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owners can delete properties")
 
+    try:
+        _id = ObjectId(property_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid property ID")
+
+    owner_id = current_user["user_id"]
+
+    result = await properties_collection.delete_one({"_id":_id ,"owner_id":owner_id})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No such property found")
+
+    return{
+        "message":"Deleted the property successfully",
+        "property_id": str(_id)
+    }
 
