@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from schemas.property import PropertyCreate
 from dependency import get_current_user
 from database.connection import database
+from bson.objectid import ObjectId
+from bson.errors import InvalidId
 
 router = APIRouter()
 
@@ -48,6 +50,28 @@ async def view_properties(current_user : dict = Depends(get_current_user)):
     for property_item in result:
         property_item["property_id"] = str(property_item["_id"])
         del property_item["_id"]
+
+    return result
+
+@router.get("/api/properties/{property_id}")
+async def view_property(property_id : str,current_user : dict = Depends(get_current_user)):
+    if current_user["role"] != "owner":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owner can see their properties")
+
+    try:
+        _id = ObjectId(property_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid property ID format")
+
+    owner_id = current_user["user_id"]
+
+    result = await properties_collection.find_one({"_id":_id,"owner_id":owner_id})
+
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Property not found")
+
+    result["property_id"] = str(result["_id"])
+    del result["_id"] 
 
     return result
     
