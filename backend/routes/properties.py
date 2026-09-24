@@ -37,6 +37,42 @@ async def create_property(property_data : PropertyCreate,current_user : dict = D
         "property_id": str(result.inserted_id)
     }
 
+@router.get("/api/properties/available")
+async def view_properties(current_user : dict = Depends(get_current_user)):
+    if current_user["role"] != "tenant":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Tenants can see the property")
+    
+    cursor = properties_collection.find({"availability": "available"})
+
+    result = await cursor.to_list(length=None)
+
+    for property in result:
+        property["property_id"] = str(property["_id"])
+        del property["_id"]
+        del property["owner_id"]
+
+    return result
+
+@router.get("/api/properties/available/{property_id}")
+async def view_property(property_id : str, current_user : dict = Depends(get_current_user)):
+    if current_user["role"] != "tenant":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Tenants can see the property")
+
+    try:
+        _id = ObjectId(property_id)
+    except InvalidId:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid property ID format")
+
+    result = await properties_collection.find_one({"_id":_id,"availability":"available"})
+
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Property not found")
+
+    result["property_id"] = str(result["_id"])
+    del result["_id"]
+    del result["owner_id"]
+    return result
+
 @router.get("/api/properties")
 async def view_properties(current_user : dict = Depends(get_current_user)):
     if current_user["role"] != "owner":
@@ -106,6 +142,7 @@ async def update_property(property_id : str,updated_property : PropertyCreate,cu
         "property_id": str(_id)
     }
 
+
 @router.delete("/api/properties/{property_id}",status_code=status.HTTP_200_OK,response_model=PropertyCreateResponse)
 async def delete_property(property_id : str,current_user : dict = Depends(get_current_user)):
     if current_user["role"] != "owner":
@@ -127,4 +164,3 @@ async def delete_property(property_id : str,current_user : dict = Depends(get_cu
         "message":"Deleted the property successfully",
         "property_id": str(_id)
     }
-
