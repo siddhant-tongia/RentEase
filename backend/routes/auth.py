@@ -14,7 +14,7 @@ load_dotenv()
 class RegisterRequest(BaseModel): 
     name : str = Field(min_length=2,max_length=50,description="Enter your name")
     email : EmailStr
-    password : SecretStr
+    password : SecretStr = Field(min_length=8, description="Password must be at least 8 characters")
     role : Literal["owner","tenant"]
 
 class LoginRequest(BaseModel):
