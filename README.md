@@ -2,132 +2,96 @@
 
 # 🏠 RentEase
 
-### AI-Powered Rental Property Management System
+### Rental Property Management System
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
-[![Gemini](https://img.shields.io/badge/Google_Gemini-AI-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
 
-**RentEase** is a full-stack web application that eliminates fragmented rental administration by unifying property records, tenant management, rent tracking, payment verification, maintenance requests, and AI-driven insights into a single, intelligent platform.
-
-[Features](#-features) · [Tech Stack](#-tech-stack) · [Architecture](#-architecture) · [Getting Started](#-getting-started) · [Documentation](#-documentation) · [Team](#-team)
+**RentEase** is a full-stack web application for property owners and tenants. Owners can list, manage, and track their rental properties, while tenants can browse and view available listings — all with secure, role-based authentication.
 
 </div>
 
 ---
 
-## 📋 Overview
+## 📋 Current MVP Scope
 
-Managing rental properties through scattered spreadsheets, WhatsApp messages, and manual follow-ups is chaotic and error-prone. **RentEase** solves this by providing:
+RentEase currently implements the following core capabilities:
 
-- **For Property Owners** — A single dashboard view of occupied properties, payment evidence, outstanding maintenance tickets, and AI-generated actionable summaries. No more missed follow-ups.
-- **For Tenants** — A reliable way to view rent obligations, submit evidence-backed maintenance requests, receive real-time status updates, and obtain responses through a structured system.
-- **For Administrators** — Complete platform oversight with user management, system health monitoring, and high-level revenue analytics.
-
----
-
-## ✨ Features
-
-### 🔐 Authentication & Role-Based Access Control
-- Secure registration and login with **JWT tokens** stored in HttpOnly cookies
-- Three distinct roles — **Admin**, **Owner**, **Tenant** — each with tailored dashboards
-- RBAC enforcement on both frontend and backend routes
-
-### 🏘️ Property & Tenant Management
-- Full CRUD operations for property listings with image uploads via **Cloudinary**
-- Tenant assignment with lease lifecycle management (start date, end date, rent terms)
-- Real-time property status tracking (vacant, occupied, under maintenance)
-
-### 💰 Rent Tracking & QR Payment Verification
-- **Static UPI QR code** generation for each active property
-- Tenants submit payment proof via **UTR (Unique Transaction Reference)**
-- Owners manually verify payments against bank records
-- Auto-generated downloadable **rent receipts** upon verification
-- Complete, immutable payment history per tenant and per property
-
-### 🤖 AI-Powered Assistant & Analytics
-- **Domain-aware AI chat** interface powered by **Google Gemini API**
-- Automated **rent reminders** sent via in-app notifications and email
-- AI-driven **complaint summarization** for quick Owner review
-- Auto-generated **monthly business reports** with financial data, occupancy rates, and revenue analytics
-
-### 🔧 Maintenance Request System
-- Tenants submit requests with **title, description, category, and photo evidence**
-- Smart **priority assignment** (Critical / High / Medium / Low) based on category and keywords
-- Full lifecycle: Open → Acknowledged → In Progress → Resolved → Closed
-- **Real-time updates** via WebSockets with email fallback
-- Immutable **audit trail** of all status changes, messages, and priority adjustments
-- Tenants can confirm resolution or reopen with explanation
-
-### 🔔 Notifications
-- Real-time **in-app notifications** via authenticated WebSocket channels
-- **Email notifications** (SMTP) as fallback for offline users
-- Notifications for rent reminders, payment status, maintenance updates, and system alerts
+- **Secure Authentication** — Registration and login for Owners and Tenants with JWT-based sessions using HttpOnly cookies
+- **Owner Property Management** — Full CRUD (Create, Read, Update, Delete) for property listings
+- **Tenant Property Browsing** — Read-only access to browse and view available properties
+- **Role-Based Access Control** — Owners and Tenants see only what they're authorized to access
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Implemented Features
+
+### 🔐 Authentication & Sessions
+- User registration with name, email, password, and role selection (Owner / Tenant)
+- Login with role-based redirect (Owner → Dashboard, Tenant → Browse Properties)
+- JWT token stored in HttpOnly cookie (never in localStorage or sessionStorage)
+- Session persistence across page refreshes
+- Logout with confirmation dialog
+- Password strength enforcement (minimum 8 characters)
+- Duplicate email detection
+
+### 🏘️ Owner Features
+- **Dashboard** — Account info (email, role) and total property count
+- **Property List** — Responsive grid of all owned properties with View/Edit/Delete actions
+- **Create Property** — Form with title, address, type, rent, availability, and description
+- **Edit Property** — Pre-filled form to update any property field
+- **Delete Property** — Confirmation dialog before permanent deletion
+- **Property Details** — Full detail view with all fields and action buttons
+
+### 🔍 Tenant Features
+- **Browse Available Properties** — Grid view of all available properties (occupied ones are hidden)
+- **View Property Details** — Read-only detail view with all property information
+- **Empty State** — Friendly message when no properties are available
+
+### 🛡️ Access Control
+- Backend rejects wrong-role API requests with 403 Forbidden
+- Frontend `ProtectedRoute` component redirects unauthorized users
+- Owner data isolation — each owner can only see/modify their own properties
+- Tenant cannot create, edit, or delete any property
+- Unauthenticated API requests return 401 Unauthorized
+
+### 💬 Error Handling & UX
+- Client-side form validation (required fields, password length, rent > 0)
+- Server-side Pydantic validation with detailed error messages
+- Network error detection: "Cannot connect to server. Please make sure the backend is running."
+- Loading states on all data-fetching pages
+- 404 Not Found page for undefined routes
+
+---
+
+## 👤 User Roles & Permissions
+
+| Capability | Owner | Tenant |
+|---|:---:|:---:|
+| Register | ✅ | ✅ |
+| Login / Logout | ✅ | ✅ |
+| View Dashboard | ✅ | ❌ |
+| Create Property | ✅ | ❌ |
+| View Own Properties | ✅ | ❌ |
+| Edit Own Property | ✅ | ❌ |
+| Delete Own Property | ✅ | ❌ |
+| Browse Available Properties | ❌ | ✅ |
+| View Available Property Details | ❌ | ✅ |
+
+---
+
+## 🛠️ Technology Stack
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | React 18, TypeScript, Tailwind CSS, Axios, Chart.js |
-| **Backend** | Python 3.11+, FastAPI, Pydantic, WebSockets |
-| **Database** | MongoDB Atlas (NoSQL document database) |
-| **Authentication** | JWT (JSON Web Tokens), Passlib + Argon2, RBAC |
-| **AI/ML** | Google Gemini API |
-| **Media Storage** | Cloudinary (images, PDFs, receipts) |
-| **Email** | SMTP (smtplib) |
-| **Deployment** | Vercel (frontend), Render (backend) |
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENT (Browser)                         │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │          React + TypeScript + Tailwind CSS                │  │
-│  │  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │  │
-│  │  │  Admin  │  │  Owner   │  │  Tenant  │  │ AI Chat  │    │  │
-│  │  │Dashboard│  │Dashboard │  │Dashboard │  │Interface │    │  │
-│  │  └─────────┘  └──────────┘  └──────────┘  └──────────┘    │  │
-│  └──────────────────────┬────────────────────────────────────┘  │
-│                         │ Axios (REST) + WebSockets             │
-└─────────────────────────┼───────────────────────────────────────┘
-                          │ HTTPS
-┌─────────────────────────┼───────────────────────────────────────┐
-│                    BACKEND (FastAPI)                            │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────────┐   │
-│  │   Auth   │ │ Property │ │  Tenant  │ │    Maintenance    │   │
-│  │  Module  │ │  Module  │ │  Module  │ │      Module       │   │
-│  └──────────┘ └──────────┘ └──────────┘ └───────────────────┘   │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────────┐   │
-│  │ Payment  │ │    AI    │ │  Notif.  │ │   WebSocket Mgr   │   │
-│  │  Module  │ │  Module  │ │  Module  │ │                   │   │
-│  └──────────┘ └──────────┘ └──────────┘ └───────────────────┘   │
-│              JWT + RBAC Middleware  |  Pydantic Validation      │
-└───────┬──────────────┬──────────────┬───────────────────────────┘
-        │              │              │
-   ┌────▼────┐    ┌────▼─────┐   ┌────▼────────────┐
-   │MongoDB  │    │Cloudinary│   │  Google Gemini  │
-   │ Atlas   │    │  (Media) │   │   API (AI)      │
-   └─────────┘    └──────────┘   └─────────────────┘
-```
-
-### Database Collections
-
-| Collection | Purpose |
-|---|---|
-| `Users` | Authentication, profiles, roles (Admin/Owner/Tenant) |
-| `Properties` | Property listings, addresses, images, QR codes |
-| `Tenants` | Tenant-property assignments, lease dates, status |
-| `Payments` | Rent transactions, UTRs, verification status, receipts |
-| `Maintenance` | Maintenance requests, priorities, status history |
-| `Notifications` | In-app notifications, read status |
+| **Frontend** | React 18, JavaScript (JSX), Plain CSS, React Router DOM v6 |
+| **Build Tool** | Vite 6 |
+| **HTTP Client** | Native `fetch` API with `credentials: 'include'` |
+| **Backend** | Python 3.11+, FastAPI, Pydantic, Uvicorn |
+| **Database** | MongoDB Atlas (via Motor async driver) |
+| **Authentication** | JWT (PyJWT) in HttpOnly cookies |
+| **Password Hashing** | Argon2 via `pwdlib` |
 
 ---
 
@@ -135,131 +99,400 @@ Managing rental properties through scattered spreadsheets, WhatsApp messages, an
 
 ```text
 RentEase-repo/
-├── backend/                  # FastAPI Python backend
-│   └── .env.example          # Environment variables template
-├── docs/                     # Project documentation
-│   ├── SRS.md                # Software Requirements Specification
-│   ├── User-Stories.md       # User stories and acceptance criteria
-│   └── UML-Diagrams/         # System architecture and design diagrams
-│       ├── 1_UseCase_Diagram.excalidraw
-│       ├── 2_Class_Diagram.excalidraw
-│       ├── 3_Sequence_Diagram.excalidraw
-│       ├── 4_Activity_Diagram.excalidraw
-│       ├── 5_Component_Diagram.excalidraw
-│       └── 6_StateChart_Diagram.excalidraw
-├── frontend/                 # React frontend application
-│   └── .gitkeep              # Placeholder for frontend setup
-├── .gitignore                # Git ignore rules
-└── README.md                 # Project overview and setup instructions
+├── backend/                    # FastAPI Python backend
+│   ├── main.py                 # FastAPI app entry point
+│   ├── dependency.py           # JWT cookie authentication dependency
+│   ├── requirements.txt        # Python dependencies
+│   ├── .env.example            # Environment variable template
+│   ├── .env                    # Your local environment variables (git-ignored)
+│   ├── database/
+│   │   └── connection.py       # MongoDB Atlas connection via Motor
+│   ├── routes/
+│   │   ├── health.py           # GET /api/health
+│   │   ├── auth.py             # Registration, login, session, logout
+│   │   └── properties.py       # Property CRUD + tenant available endpoints
+│   └── schemas/
+│       └── property.py         # PropertyCreate Pydantic schema
+├── frontend/                   # React frontend application
+│   ├── package.json            # Node.js dependencies and scripts
+│   ├── .env.example            # Frontend env template
+│   ├── vite.config.js          # Vite dev server config with API proxy
+│   ├── index.html              # HTML entry point
+│   └── src/
+│       ├── App.jsx             # Route definitions
+│       ├── main.jsx            # React root with BrowserRouter & AuthProvider
+│       ├── index.css            # Global styles (plain CSS)
+│       ├── components/         # Reusable UI components
+│       │   ├── Navbar.jsx      # Role-aware navigation bar
+│       │   ├── ProtectedRoute.jsx  # Route guard by role
+│       │   ├── PropertyCard.jsx    # Property card for grid views
+│       │   ├── ErrorMessage.jsx    # Error alert component
+│       │   └── LoadingMessage.jsx  # Loading indicator component
+│       ├── pages/              # Page components
+│       │   ├── HomePage.jsx
+│       │   ├── LoginPage.jsx
+│       │   ├── RegisterPage.jsx
+│       │   ├── OwnerDashboardPage.jsx
+│       │   ├── OwnerPropertiesPage.jsx
+│       │   ├── PropertyFormPage.jsx      # Create & Edit (shared)
+│       │   ├── PropertyDetailsPage.jsx   # Owner detail view
+│       │   ├── TenantPropertiesPage.jsx
+│       │   ├── TenantPropertyDetailsPage.jsx
+│       │   └── NotFoundPage.jsx
+│       ├── context/
+│       │   └── AuthContext.jsx  # Auth state management (user, login, logout)
+│       └── services/
+│           ├── api.js           # Base fetch wrapper with error handling
+│           ├── authService.js   # Auth API calls (register, login, me, logout)
+│           └── propertyService.js  # Property API calls (CRUD + available)
+├── docs/                       # Project documentation
+│   ├── SRS.md                  # Software Requirements Specification (IEEE 830)
+│   ├── User-Stories.md         # User stories with acceptance criteria
+│   ├── Test-Case.md            # Test cases
+│   └── UML-Diagrams/           # Excalidraw design diagrams
+├── .gitignore
+├── README.md                   # ← You are here
+└── task.txt                    # Task instructions
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🔄 System Flow
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  CLIENT (Browser)                    │
+│  ┌───────────────────────────────────────────────┐  │
+│  │        React 18 + JavaScript (JSX)            │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌────────────┐  │  │
+│  │  │  Owner   │  │  Tenant  │  │  Public    │  │  │
+│  │  │Dashboard │  │ Browse   │  │ Login/Reg  │  │  │
+│  │  └──────────┘  └──────────┘  └────────────┘  │  │
+│  └────────────────────┬──────────────────────────┘  │
+│                       │ fetch() + credentials       │
+└───────────────────────┼─────────────────────────────┘
+                        │ Vite Proxy (dev): /api → :8000
+┌───────────────────────┼─────────────────────────────┐
+│                  BACKEND (FastAPI)                   │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │   Auth   │  │ Property │  │    Health Check   │  │
+│  │  Routes  │  │  Routes  │  │      Route        │  │
+│  └──────────┘  └──────────┘  └──────────────────┘  │
+│         JWT + Role Checks  |  Pydantic Validation   │
+└───────────────────────┬─────────────────────────────┘
+                        │
+                   ┌────▼─────┐
+                   │ MongoDB  │
+                   │  Atlas   │
+                   │(2 colls) │
+                   └──────────┘
+```
+
+---
+
+## 🚀 Getting Started — Complete Setup Guide
+
+> **This section is for any team member who wants to clone the repo and run both the backend and frontend on their own system.**
 
 ### Prerequisites
 
-- **Node.js** 18+ and **npm**
-- **Python** 3.11+ and **pip**
-- **MongoDB Atlas** account (or local MongoDB)
-- **Cloudinary** account
-- **Google Gemini API** key
+Make sure you have the following installed on your Windows machine:
 
-### 1. Clone the Repository
+| Tool | Version | Check Command |
+|---|---|---|
+| **Python** | 3.11 or higher | `python --version` |
+| **pip** | Latest | `pip --version` |
+| **Node.js** | 18 or higher | `node --version` |
+| **npm** | Comes with Node.js | `npm --version` |
+| **Git** | Latest | `git --version` |
+| **MongoDB Atlas Account** | Free tier works | [mongodb.com/atlas](https://www.mongodb.com/atlas) |
 
-```bash
+### Step 1 — Clone the Repository
+
+Open **PowerShell** and run:
+
+```powershell
 git clone https://github.com/siddhant-tongia/RentEase.git
 cd RentEase
 ```
 
-### 2. Backend Setup
-
-```bash
-cd backend
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
-
-pip install -r requirements.txt
-```
-
-Create a `.env` file in the `backend/` directory:
-
-```env
-# MongoDB
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/rentease
-
-# JWT
-JWT_SECRET_KEY=your-secret-key
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
-
-# Google Gemini
-GEMINI_API_KEY=your-gemini-api-key
-
-# Email (SMTP)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_EMAIL=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-```
-
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-npm install
-```
-
-Create a `.env` file in the `frontend/` directory:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-```bash
-npm run dev
-```
-
-### 4. Access the Application
-
-- **Frontend:** http://localhost:5173
-- **Backend API Docs:** http://localhost:8000/docs (Swagger UI)
+You should now see the `backend/`, `frontend/`, and `docs/` folders.
 
 ---
 
-## 📚 Documentation
+### Step 2 — Backend Setup
 
-| Document | Description |
+> **Open a new PowerShell terminal (Terminal 1 — Backend)**
+
+#### 2.1 Navigate to the backend folder
+
+```powershell
+cd backend
+```
+
+#### 2.2 Create a Python virtual environment
+
+```powershell
+python -m venv myenv
+```
+
+#### 2.3 Activate the virtual environment
+
+```powershell
+.\myenv\Scripts\Activate.ps1
+```
+
+> **Note:** If you get an execution policy error, run this first:
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
+> Then try activating again.
+
+You should see `(myenv)` appear at the beginning of your terminal prompt.
+
+#### 2.4 Install Python dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+#### 2.5 Create the environment file
+
+Create a file named `.env` inside the `backend/` folder with the following variables:
+
+```env
+MONGODB_URL=mongodb+srv://<your-username>:<your-password>@<your-cluster>.mongodb.net/?retryWrites=true&w=majority
+DATABASE_NAME=rentease
+JWT_SECRET=your-secret-key-here
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=60
+```
+
+> ⚠️ **Important:**
+> - Replace the `MONGODB_URL` with your actual MongoDB Atlas connection string.
+> - Replace `JWT_SECRET` with any long, random string (e.g., `mysupersecretkey123`).
+> - **Never commit the `.env` file to GitHub** — it is already in `.gitignore`.
+
+**How to get your MongoDB Atlas connection string:**
+1. Go to [MongoDB Atlas](https://www.mongodb.com/atlas) and sign in.
+2. Create a free cluster (if you don't have one).
+3. Click **"Connect"** → **"Connect your application"**.
+4. Copy the connection string and replace `<username>`, `<password>`, and `<cluster>` with your actual values.
+5. Make sure your IP address is whitelisted in **Network Access** (or allow access from anywhere for development: `0.0.0.0/0`).
+
+#### 2.6 Start the backend server
+
+```powershell
+uvicorn main:app --reload
+```
+
+You should see:
+
+```
+MongoDB connection successful
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+```
+
+#### 2.7 Verify the backend is running
+
+Open your browser and go to:
+- **Swagger UI (API Docs):** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **Health Check:** [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health) — should return `{"status":"ok","service":"RentEase API"}`
+
+✅ **Backend is ready!** Keep this terminal running.
+
+---
+
+### Step 3 — Frontend Setup
+
+> **Open a second PowerShell terminal (Terminal 2 — Frontend)**
+
+#### 3.1 Navigate to the frontend folder
+
+```powershell
+cd frontend
+```
+
+#### 3.2 Install Node.js dependencies
+
+```powershell
+npm install
+```
+
+This will create a `node_modules/` folder and a `package-lock.json` file.
+
+#### 3.3 Start the frontend development server
+
+```powershell
+npm run dev
+```
+
+You should see:
+
+```
+  VITE v6.x.x  ready in xxx ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+```
+
+#### 3.4 Open the application
+
+Open your browser and go to: **[http://localhost:5173](http://localhost:5173)**
+
+You should see the RentEase home page with Login and Register buttons.
+
+✅ **Frontend is ready!**
+
+---
+
+### Step 4 — Test the Full Flow
+
+Here's the recommended manual testing flow:
+
+1. **Register an Owner** — Go to `/register`, fill in details, select "Owner", click Register.
+2. **Register a Tenant** — Go to `/register` again, use a different email, select "Tenant", click Register.
+3. **Login as Owner** — Go to `/login`, use the owner's credentials. You should land on the Owner Dashboard.
+4. **Create a Property** — Click "Manage Properties" → "+ Add Property" → Fill in details → "Create Property".
+5. **View/Edit/Delete** — Try viewing, editing, and deleting properties from the list.
+6. **Logout** — Click "Logout" in the navbar. Confirm the dialog. You should be redirected to login.
+7. **Login as Tenant** — Use the tenant's credentials. You should see "Browse Properties".
+8. **Browse Properties** — Available properties created by the owner should appear. Click "View Details" to see full info.
+9. **Try Wrong Access** — As a tenant, try navigating to `/owner/dashboard` — you should be redirected to home.
+
+---
+
+## 🔗 How Frontend Communicates with Backend
+
+### Development Setup
+
+During local development, the **frontend (port 5173)** and **backend (port 8000)** run on different ports. To avoid CORS issues, the Vite dev server is configured as a reverse proxy:
+
+```javascript
+// frontend/vite.config.js
+server: {
+  port: 5173,
+  proxy: {
+    '/api': {
+      target: 'http://127.0.0.1:8000',
+      changeOrigin: true,
+    },
+  },
+}
+```
+
+This means:
+- The frontend code calls `/api/auth/login` (relative URL)
+- Vite intercepts it and forwards to `http://127.0.0.1:8000/api/auth/login`
+- The browser thinks it's talking to the same origin, so cookies work seamlessly
+
+### HttpOnly Cookie & Credentials
+
+- On login, the backend sets an **HttpOnly cookie** named `access_token` containing the JWT.
+- The frontend sends `credentials: 'include'` with every `fetch` request, which tells the browser to automatically include cookies.
+- **The JWT is never accessible to JavaScript** — it cannot be stolen via XSS attacks.
+- On logout, the backend deletes the cookie from the response.
+
+---
+
+## 📡 API Endpoint Table
+
+| Method | Endpoint | Role | Purpose |
+|---|---|---|---|
+| `GET` | `/api/health` | Public | Health check |
+| `POST` | `/api/auth/register` | Public | Register a new user |
+| `POST` | `/api/auth/login` | Public | Log in (sets cookie) |
+| `GET` | `/api/auth/me` | Authenticated | Get current user info |
+| `POST` | `/api/auth/logout` | Authenticated | Log out (clears cookie) |
+| `POST` | `/api/properties` | Owner | Create a property |
+| `GET` | `/api/properties` | Owner | List owner's properties |
+| `GET` | `/api/properties/{id}` | Owner | View one owned property |
+| `PUT` | `/api/properties/{id}` | Owner | Update owned property |
+| `DELETE` | `/api/properties/{id}` | Owner | Delete owned property |
+| `GET` | `/api/properties/available` | Tenant | List available properties |
+| `GET` | `/api/properties/available/{id}` | Tenant | View one available property |
+
+### Request Body Fields
+
+**Registration (`POST /api/auth/register`):**
+```json
+{
+  "name": "string (2-50 chars)",
+  "email": "valid email",
+  "password": "string (min 8 chars)",
+  "role": "owner | tenant"
+}
+```
+
+**Login (`POST /api/auth/login`):**
+```json
+{
+  "email": "valid email",
+  "password": "string"
+}
+```
+
+**Property (`POST /api/properties`, `PUT /api/properties/{id}`):**
+```json
+{
+  "title": "string or null (2-100 chars, optional)",
+  "address": "string (5-100 chars, required)",
+  "property_type": "apartment | house | room | other",
+  "monthly_rent": "float > 0 (required)",
+  "availability": "available | occupied",
+  "description": "string or null (max 500 chars, optional)"
+}
+```
+
+---
+
+## ❗ Common Errors & Troubleshooting
+
+| Problem | Solution |
 |---|---|
-| [Software Requirements Specification (SRS)](docs/SRS.md) | Complete IEEE 830-1998 compliant SRS document |
-| [User Stories](docs/User-Stories.md) | User stories with acceptance criteria for all features |
-| [UML Diagrams](docs/UML-Diagrams/) | System architecture and design diagrams |
+| `MONGODB_URL is not set in the .env file` | Create a `.env` file in `backend/` with your MongoDB Atlas connection string |
+| `JWT_SECRET is not set in the .env file` | Add `JWT_SECRET=your-secret-key` to your `.env` file |
+| `MongoDB connection failed` | Check your MongoDB Atlas connection string, whitelist your IP in Atlas Network Access |
+| `Cannot connect to server. Please make sure the backend is running.` | Make sure the backend server is running on port 8000 (Terminal 1) |
+| PowerShell execution policy error | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
+| `npm: command not found` | Install Node.js from [nodejs.org](https://nodejs.org/) |
+| `python: command not found` | Install Python from [python.org](https://www.python.org/) and add to PATH |
+| `ModuleNotFoundError` | Make sure the virtual environment is activated: `.\myenv\Scripts\Activate.ps1` |
+| Frontend shows blank page | Check browser console for errors. Make sure backend is running first. |
+| Login works but dashboard is empty | You need to create properties first via "Add Property" |
+| Tenant sees no properties | An owner must create properties with `availability: "available"` first |
 
-### UML Diagrams
+---
 
-> Open `.excalidraw` files at [excalidraw.com](https://excalidraw.com) or using the [VS Code Excalidraw extension](https://marketplace.visualstudio.com/items?itemName=pomdtr.excalidraw-editor).
+## 🔒 Security Notes
 
-| Diagram | File | Description |
-|---|---|---|
-| Use Case Diagram | [`1_UseCase_Diagram.excalidraw`](docs/UML-Diagrams/1_UseCase_Diagram.excalidraw) | All actors and their interactions with the system |
-| Class Diagram | [`2_Class_Diagram.excalidraw`](docs/UML-Diagrams/2_Class_Diagram.excalidraw) | Entity models, attributes, and relationships |
-| Sequence Diagram | [`3_Sequence_Diagram.excalidraw`](docs/UML-Diagrams/3_Sequence_Diagram.excalidraw) | Critical flow interactions (Auth, Payment, Maintenance) |
-| Activity Diagram | [`4_Activity_Diagram.excalidraw`](docs/UML-Diagrams/4_Activity_Diagram.excalidraw) | Process workflows for payment and maintenance |
-| Component Diagram | [`5_Component_Diagram.excalidraw`](docs/UML-Diagrams/5_Component_Diagram.excalidraw) | System architecture and component dependencies |
-| State Chart Diagram | [`6_StateChart_Diagram.excalidraw`](docs/UML-Diagrams/6_StateChart_Diagram.excalidraw) | Entity lifecycles: User, Property, Payment, Maintenance, Notification |
+- **Passwords** are hashed with Argon2 (via `pwdlib`) — never stored in plaintext
+- **JWT tokens** are stored in HttpOnly cookies — cannot be accessed by JavaScript
+- **No secrets in code** — all sensitive values (MongoDB URL, JWT secret) are in `.env` files which are git-ignored
+- **Role enforcement** — both backend API routes and frontend routes check user roles
+- **Data isolation** — owners can only access their own properties; tenants get read-only access to available listings
+- **Input validation** — Pydantic schemas validate all API inputs; the frontend validates forms before submission
+
+---
+
+
+## 🔮 Future Scope
+
+- Rent management and payment tracking with UPI QR verification
+- Tenant-property assignment with lease lifecycle management
+- Maintenance request system with priority and audit trail
+- AI-powered assistant using Google Gemini API
+- Analytics dashboard with financial reports
+- Real-time notifications via WebSockets
+- Email notifications via SMTP
+- Image upload via Cloudinary
+- Admin role and platform management panel
+- Password reset and email verification
+- Advanced search, filters, and pagination
+- Production deployment (Vercel + Render)
+- Mobile application
 
 ---
 
@@ -277,9 +510,16 @@ npm run dev
 
 ---
 
-## 📄 License
+## 📚 Documentation
 
-This project is licensed under the [MIT License](LICENSE).
+| Document | Description |
+|---|---|
+| [Software Requirements Specification (SRS)](docs/SRS.md) | IEEE 830-1998 compliant SRS for the current MVP |
+| [User Stories](docs/User-Stories.md) | 20 implemented user stories with acceptance criteria |
+| [Test Cases](docs/Test-Case.md) | 25 comprehensive test cases covering all features |
+| [UML Diagrams](docs/UML-Diagrams/) | System architecture and design diagrams (Excalidraw) |
+
+> Open `.excalidraw` files at [excalidraw.com](https://excalidraw.com) or using the [VS Code Excalidraw extension](https://marketplace.visualstudio.com/items?itemName=pomdtr.excalidraw-editor).
 
 ---
 
