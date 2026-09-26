@@ -2,16 +2,11 @@
 
 ## Table of Contents
 
-- [User Stories — RentEase](#user-stories--rentease)
-  - [Table of Contents](#table-of-contents)
-  - [1. User Authentication \& Registration](#1-user-authentication--registration)
-  - [2. Property Management](#2-property-management)
-  - [3. Tenant Management](#3-tenant-management)
-  - [4. Rent Tracking \& Payment Verification](#4-rent-tracking--payment-verification)
-  - [5. Maintenance Request System](#5-maintenance-request-system)
-  - [6. Notifications](#6-notifications)
-  - [7. AI-Powered Assistant \& Analytics](#7-ai-powered-assistant--analytics)
-  - [8. Admin Panel](#8-admin-panel)
+- [1. User Authentication & Registration](#1-user-authentication--registration)
+- [2. Owner Property Management](#2-owner-property-management)
+- [3. Tenant Property Browsing](#3-tenant-property-browsing)
+- [4. Authorization & Access Control](#4-authorization--access-control)
+- [5. User Interface & Navigation](#5-user-interface--navigation)
 
 ---
 
@@ -20,504 +15,346 @@
 ### US-1.1
 
 **User Story:**
-As a **new user**, I want to register with my name, email, and password, so that I can create an account on RentEase.
+As a **new user**, I want to register with my credentials as an owner, so that I can manage properties.
 
 **Pre-requisite:**
-None
+User is on the registration page.
 
 **Acceptance Criteria:**
-- Registration form validates email format and password strength.
-- Duplicate email is rejected with a clear message.
-- On success, account is created and user is redirected to login.
+- Registration form collects credentials and role.
+- Name must be between 2 and 50 characters.
+- Email must be in a valid format.
+- Password must be at least 8 characters (enforced on frontend and backend).
+- Duplicate email is rejected with "This email is already registered."
+- On success, a confirmation message is shown with a link to login.
+- Password is hashed using Argon2 before storage.
 
 ---
 
 ### US-1.2
 
 **User Story:**
-As a **registered user**, I want to log in with my email and password, so that I can access my dashboard.
+As a **new user**, I want to register with my credentials as a tenant, so that I can browse properties.
 
 **Pre-requisite:**
-US-1.1
+User is on the registration page.
 
 **Acceptance Criteria:**
-- Valid credentials generate a JWT token stored in HttpOnly cookie.
-- Invalid credentials show an error message.
-- User is redirected to their role-specific dashboard.
+- Registration form defaults the role selector to "tenant".
+- Same validation rules as owner registration apply.
+- On success, a confirmation message is shown with a link to login.
+- Form fields are cleared after successful registration.
 
 ---
 
 ### US-1.3
 
 **User Story:**
-As a **logged-in user**, I want to log out, so that my session is ended securely.
+As a **registered user**, I want to log in with my credentials, so that I can securely access my dashboard.
 
 **Pre-requisite:**
-US-1.2
+User has successfully registered an account.
 
 **Acceptance Criteria:**
-- JWT token is cleared on logout.
-- User is redirected to the login page.
-- Accessing protected routes after logout redirects to login.
+- Login form collects email and password.
+- Valid credentials generate a JWT stored in an HttpOnly cookie.
+- Owner is redirected to the Owner Dashboard.
+- Tenant is redirected to the Browse Properties page.
+- Invalid credentials show "Invalid email or password."
+- Empty fields show "Please fill in all fields."
+- Submit button shows "Logging in…" while processing.
 
 ---
 
 ### US-1.4
 
 **User Story:**
-As a **registered user**, I want the system to restrict access based on my role, so that I only see features meant for me.
+As a **logged-in user**, I want my session to persist, so that I stay logged in after a refresh.
 
 **Pre-requisite:**
-US-1.1
+User is successfully logged into the system.
 
 **Acceptance Criteria:**
-- Admin, Owner, and Tenant each see different dashboard content.
-- Accessing an unauthorized route shows a 403 error or redirects.
+- On application load, the system calls the current-user endpoint to check the session.
+- If the cookie is valid, user state is restored automatically.
+- If the cookie is expired or missing, the user is treated as unauthenticated.
+- A loading state is shown while the session check is in progress.
 
 ---
 
-## 2. Property Management
+### US-1.5
+
+**User Story:**
+As a **logged-in user**, I want to log out safely, so that I avoid accidental session termination.
+
+**Pre-requisite:**
+User is successfully logged into the system.
+
+**Acceptance Criteria:**
+- Clicking Logout shows a browser confirmation: "Are you sure you want to logout?"
+- Clicking Cancel keeps the user logged in.
+- Clicking OK calls the logout endpoint, clears the authentication cookie, and redirects to login.
+- Accessing protected routes after logout redirects to login.
+
+---
+
+### US-1.6
+
+**User Story:**
+As a **new user**, I want strict password validation, so that my account remains secure.
+
+**Pre-requisite:**
+User is on the registration page.
+
+**Acceptance Criteria:**
+- Frontend checks password is at least 8 characters before submitting.
+- If too short, "Password must be at least 8 characters long." is shown without an API call.
+- Backend schema also enforces minimum length of 8 via Pydantic validation.
+
+---
+
+## 2. Owner Property Management
 
 ### US-2.1
 
 **User Story:**
-As an **Owner**, I want to add a new property with details and images, so that I can list it on the platform.
+As a **property owner**, I want to add property details, so that my listing appears in my portfolio.
 
 **Pre-requisite:**
-US-1.2, US-1.4
+User is logged in as an Owner.
 
 **Acceptance Criteria:**
-- Form accepts title, address, rent amount, security deposit, and type.
-- Images are uploaded and URLs are saved.
-- New property shows up on the Owner's dashboard.
+- Form collects: title (optional), address (required), property type (apartment/house/room/other), monthly rent (required, > 0), availability (available/occupied), description (optional).
+- Frontend validates address is not empty and rent is greater than 0.
+- On success, user is redirected to the property list.
+- On validation error, backend error messages are displayed.
 
 ---
 
 ### US-2.2
 
 **User Story:**
-As an **Owner**, I want to edit my property details, so that I can keep the listing up to date.
+As a **property owner**, I want to view my property list, so that I can monitor my portfolio.
 
 **Pre-requisite:**
-US-2.1
+User is logged in as an Owner and has added properties.
 
 **Acceptance Criteria:**
-- Owner can update any field (title, rent, address, images).
-- Changes are saved and reflected immediately.
+- Each property card shows title (or "Untitled Property"), address, type, rent, and availability badge.
+- Each card has View Details, Edit, and Delete action buttons.
+- An "+ Add Property" button is visible in the page header.
+- If no properties exist, an empty state message with "Add Your First Property" link is shown.
+- A loading message is shown while fetching.
 
 ---
 
 ### US-2.3
 
 **User Story:**
-As an **Owner**, I want to delete a property listing, so that I can remove properties I no longer manage.
+As a **property owner**, I want to view specific property details, so that I can review its information.
 
 **Pre-requisite:**
-US-2.1
+User is logged in as an Owner with existing properties.
 
 **Acceptance Criteria:**
-- Property is removed from the Owner's dashboard.
-- Associated data is handled properly (tenant unlinked if any).
+- All fields are displayed: title, address, type, monthly rent (₹), availability badge, description.
+- Edit and Delete buttons are available.
+- A "Back to Properties" link is provided.
+- Invalid property ID shows "Invalid property ID." error.
+- Nonexistent property shows "Property not found." error.
 
 ---
 
 ### US-2.4
 
 **User Story:**
-As an **Owner**, I want to see the status of each property (Vacant, Occupied, Under Maintenance), so that I can quickly know which ones need attention.
+As a **property owner**, I want to edit a property, so that my listing stays accurate.
 
 **Pre-requisite:**
-US-2.1
+User is logged in as an Owner with existing properties.
 
 **Acceptance Criteria:**
-- Dashboard shows status badges for each property.
-- Status updates automatically when a tenant is assigned or removed.
+- Form is pre-populated with the property's current values.
+- All fields can be modified.
+- Same validation rules as property creation apply.
+- On success, user is redirected to the property list.
+- Page heading shows "Edit Property" instead of "Add New Property".
 
 ---
 
-## 3. Tenant Management
+### US-2.5
+
+**User Story:**
+As a **property owner**, I want to delete a property safely, so that I can remove old listings.
+
+**Pre-requisite:**
+User is logged in as an Owner with existing properties.
+
+**Acceptance Criteria:**
+- Clicking Delete shows a browser confirmation: "Are you sure you want to delete this property?"
+- Clicking Cancel keeps the property.
+- Clicking OK permanently removes the property.
+- Deleted property no longer appears in the owner's list or tenant's available list.
+
+---
+
+### US-2.6
+
+**User Story:**
+As a **property owner**, I want to view a dashboard summary, so that I get a quick portfolio overview.
+
+**Pre-requisite:**
+User is logged in as an Owner.
+
+**Acceptance Criteria:**
+- Dashboard displays the owner's email and role.
+- Dashboard shows the total number of properties owned.
+- A "Manage Properties" button links to the property list page.
+
+---
+
+## 3. Tenant Property Browsing
 
 ### US-3.1
 
 **User Story:**
-As an **Owner**, I want to assign a registered tenant to one of my properties, so that I can start the tenancy.
+As a **tenant**, I want to browse available properties, so that I can find a suitable rental.
 
 **Pre-requisite:**
-US-2.1, US-1.1 (tenant registered)
+User is logged in as a Tenant.
 
 **Acceptance Criteria:**
-- Owner selects a tenant and a vacant property.
-- Lease start date and rent terms are defined during assignment.
-- Property status changes from Vacant to Occupied.
+- Only properties with availability "available" are shown.
+- Each card shows title, address, type, rent, and availability badge.
+- Each card has only a "View Details" button (no edit/delete).
+- If no available properties exist, a friendly message is shown: "No available properties at the moment."
+- Owner ID is not exposed in the response.
 
 ---
 
 ### US-3.2
 
 **User Story:**
-As an **Owner**, I want to remove a tenant from a property, so that I can mark it as vacant when the lease ends.
+As a **tenant**, I want to view property details, so that I can make an informed decision.
 
 **Pre-requisite:**
-US-3.1
+User is logged in as a Tenant and navigating the properties list.
 
 **Acceptance Criteria:**
-- Tenant is unlinked from the property.
-- Property status changes back to Vacant.
+- All fields are displayed: title, address, type, monthly rent (₹), availability badge, description.
+- No edit or delete buttons are shown.
+- A "Back to Properties" link navigates to the tenant's property list.
+- If property is not found or no longer available, an appropriate error is shown.
 
 ---
 
-### US-3.3
-
-**User Story:**
-As a **Tenant**, I want to view my assigned property details, so that I know my rent amount and lease dates.
-
-**Pre-requisite:**
-US-3.1
-
-**Acceptance Criteria:**
-- Tenant dashboard shows property address, rent, lease start/end dates.
-- If no property is assigned, a message is displayed.
-
----
-
-## 4. Rent Tracking & Payment Verification
+## 4. Authorization & Access Control
 
 ### US-4.1
 
 **User Story:**
-As a **Tenant**, I want to see a UPI QR code for my assigned property, so that I can make rent payments easily.
+As the **system**, I want to reject unauthenticated requests, so that sensitive data remains secure.
 
 **Pre-requisite:**
-US-3.1
+The system is running and receiving API requests.
 
 **Acceptance Criteria:**
-- A static UPI QR code is displayed for the active property.
-- QR code is scannable by any UPI app.
+- Requests without the authentication cookie receive a 401 response.
+- Requests with an expired JWT receive a 401 response.
+- Requests with a tampered JWT receive a 401 response.
+- Unauthenticated users on the frontend are redirected to login.
 
 ---
 
 ### US-4.2
 
 **User Story:**
-As a **Tenant**, I want to submit my payment UTR number after paying, so that the Owner can verify it.
+As the **system**, I want to enforce role-based access, so that users only access permitted features.
 
 **Pre-requisite:**
-US-4.1
+Users are logged in and interacting with protected endpoints.
 
 **Acceptance Criteria:**
-- Tenant enters UTR and payment date.
-- Payment is recorded with status "Pending".
-- Owner is notified about the new payment submission.
+- A tenant calling owner-only endpoints receives a 403 response.
+- An owner calling tenant-only endpoints receives a 403 response.
+- On the frontend, accessing a route with the wrong role redirects to home.
+- The navbar only shows links relevant to the current user's role.
 
 ---
 
 ### US-4.3
 
 **User Story:**
-As an **Owner**, I want to verify or reject a tenant's payment using the UTR, so that I can confirm rent is received.
+As the **system**, I want to isolate owner data, so that owners cannot access others' properties.
 
 **Pre-requisite:**
-US-4.2
+Multiple owners exist with their respective properties.
 
 **Acceptance Criteria:**
-- Owner sees list of pending payments with UTR details.
-- Owner can mark payment as "Verified" or "Rejected" (with reason).
-- Tenant is notified of the result.
+- Listing returns only properties where owner_id matches the authenticated user.
+- Viewing, updating, or deleting another owner's property returns 404.
+- An owner cannot see another owner's property count or details.
 
 ---
 
-### US-4.4
-
-**User Story:**
-As a **Tenant**, I want to download a rent receipt after my payment is verified, so that I have proof of payment.
-
-**Pre-requisite:**
-US-4.3 (verified)
-
-**Acceptance Criteria:**
-- Receipt is auto-generated upon verification.
-- Tenant can download it as a PDF.
-
----
-
-### US-4.5
-
-**User Story:**
-As a **Tenant**, I want to view my full payment history, so that I can track all my past rent payments.
-
-**Pre-requisite:**
-US-4.2
-
-**Acceptance Criteria:**
-- Payment history shows date, amount, UTR, status, and receipt link.
-- Records are sorted by date (newest first).
-
----
-
-### US-4.6
-
-**User Story:**
-As an **Owner**, I want to see a payment overview for all my properties, so that I can track which tenants have paid.
-
-**Pre-requisite:**
-US-4.2
-
-**Acceptance Criteria:**
-- Dashboard shows payment status per property per month.
-- Overdue payments are highlighted.
-
----
-
-## 5. Maintenance Request System
+## 5. User Interface & Navigation
 
 ### US-5.1
 
 **User Story:**
-As a **Tenant**, I want to submit a maintenance request with a title, description, category, and photos, so that my property issue gets reported.
+As a **user**, I want role-specific navigation, so that my interface is uncluttered.
 
 **Pre-requisite:**
-US-3.1
+User is interacting with the application interface.
 
 **Acceptance Criteria:**
-- Form requires title, description, and category.
-- Photos are optional but can be attached.
-- Request is created with status "Open" and auto-calculated priority.
+- Unauthenticated users see Login and Register links.
+- Owners see Dashboard and My Properties links, plus a Logout button.
+- Tenants see Browse Properties link, plus a Logout button.
+- The RentEase brand link always navigates to the home page.
 
 ---
 
 ### US-5.2
 
 **User Story:**
-As a **Tenant**, I want the system to assign a priority (Critical / High / Medium / Low) based on the issue category, so that urgent problems are flagged automatically.
+As a **user**, I want a welcoming home page with relevant actions, so that I know what to do.
 
 **Pre-requisite:**
-US-5.1
+User is visiting the root URL of the platform.
 
 **Acceptance Criteria:**
-- Priority is calculated from category and keywords.
-- Safety/habitability issues get Critical or High priority.
-- Cosmetic/routine issues get Medium or Low priority.
+- Unauthenticated visitors see Login and Register buttons.
+- Logged-in owners see a "Go to Dashboard" button.
+- Logged-in tenants see a "Browse Properties" button.
 
 ---
 
 ### US-5.3
 
 **User Story:**
-As an **Owner**, I want to receive a notification when a tenant submits a maintenance request, so that I can review it promptly.
+As a **user**, I want a friendly 404 page, so that I can easily return to safety.
 
 **Pre-requisite:**
-US-5.1, US-6.1
+User navigates to an undefined route.
 
 **Acceptance Criteria:**
-- In-app notification is sent via WebSocket.
-- Email notification is sent as a fallback.
-- Notification includes request title, property, and priority.
+- Any undefined route shows a "404 — Page Not Found" page.
+- A "Go Home" button links back to the home page.
 
 ---
 
 ### US-5.4
 
 **User Story:**
-As an **Owner**, I want to acknowledge and update the status of a maintenance request (Acknowledged → In Progress → Resolved), so that the tenant knows it is being handled.
+As a **user**, I want clear network error messages, so that I understand connection issues.
 
 **Pre-requisite:**
-US-5.1
+User attempts an action while the backend is unavailable.
 
 **Acceptance Criteria:**
-- Owner can change status step by step.
-- Each status change is recorded with timestamp.
-- Tenant is notified of every status change.
-
----
-
-### US-5.5
-
-**User Story:**
-As an **Owner**, I want to adjust the priority of a request with a reason, so that I can correctly reflect the urgency.
-
-**Pre-requisite:**
-US-5.2
-
-**Acceptance Criteria:**
-- Owner can change priority from the request detail page.
-- A reason field is mandatory for priority changes.
-- Change is recorded in the audit trail.
-
----
-
-### US-5.6
-
-**User Story:**
-As a **Tenant**, I want to confirm or reopen a resolved request, so that I can report if the issue is not actually fixed.
-
-**Pre-requisite:**
-US-5.4 (resolved)
-
-**Acceptance Criteria:**
-- Tenant sees "Confirm" and "Reopen" buttons on resolved requests.
-- Confirming moves status to "Closed".
-- Reopening requires an explanation and moves status back to "In Progress".
-
----
-
-### US-5.7
-
-**User Story:**
-As a **Tenant**, I want to view all my submitted maintenance requests with their current status, so that I can track progress.
-
-**Pre-requisite:**
-US-5.1
-
-**Acceptance Criteria:**
-- List shows title, status, priority, and last updated date.
-- Tenant can click on a request to see full details and history.
-
----
-
-## 6. Notifications
-
-### US-6.1
-
-**User Story:**
-As a **user**, I want to receive real-time in-app notifications for important events, so that I stay updated without refreshing the page.
-
-**Pre-requisite:**
-US-1.2
-
-**Acceptance Criteria:**
-- Notifications are delivered via WebSocket when user is online.
-- A notification bell icon shows unread count.
-
----
-
-### US-6.2
-
-**User Story:**
-As a **user**, I want to receive email notifications when I am offline, so that I don't miss important updates.
-
-**Pre-requisite:**
-US-1.1
-
-**Acceptance Criteria:**
-- Email is sent via SMTP when WebSocket delivery fails.
-- Email contains the event details and a link to the app.
-
----
-
-### US-6.3
-
-**User Story:**
-As a **user**, I want to mark notifications as read, so that I can keep my notification list organized.
-
-**Pre-requisite:**
-US-6.1
-
-**Acceptance Criteria:**
-- Clicking a notification marks it as read.
-- Unread count updates accordingly.
-
----
-
-### US-6.4
-
-**User Story:**
-As a **Tenant**, I want to receive a rent reminder before the due date, so that I don't forget to pay on time.
-
-**Pre-requisite:**
-US-3.1, US-6.1
-
-**Acceptance Criteria:**
-- Reminder is sent a few days before the due date.
-- Reminder appears as both an in-app notification and an email.
-
----
-
-## 7. AI-Powered Assistant & Analytics
-
-### US-7.1
-
-**User Story:**
-As a **user**, I want to chat with an AI assistant about rental-related queries, so that I can get quick answers without contacting support.
-
-**Pre-requisite:**
-US-1.2
-
-**Acceptance Criteria:**
-- Chat interface is available from the dashboard.
-- AI responds with context-aware answers using property/tenant data.
-- Responses are powered by Google Gemini API.
-
----
-
-### US-7.2
-
-**User Story:**
-As an **Owner**, I want the AI to summarize tenant complaints, so that I can quickly understand the key issues.
-
-**Pre-requisite:**
-US-5.1, US-7.1
-
-**Acceptance Criteria:**
-- Owner can view an AI-generated summary for maintenance requests.
-- Summary highlights the main problem and suggested action.
-
----
-
-### US-7.3
-
-**User Story:**
-As an **Owner**, I want to see a monthly business report with financial data and occupancy rates, so that I can track my rental business performance.
-
-**Pre-requisite:**
-US-4.2, US-2.1
-
-**Acceptance Criteria:**
-- Report shows total revenue, pending payments, and occupancy percentage.
-- Report is auto-generated and viewable from the dashboard.
-
----
-
-## 8. Admin Panel
-
-### US-8.1
-
-**User Story:**
-As an **Admin**, I want to view and manage all registered users, so that I can maintain platform integrity.
-
-**Pre-requisite:**
-US-1.4 (admin role)
-
-**Acceptance Criteria:**
-- Admin can see a list of all users with their roles.
-- Admin can suspend or delete user accounts.
-
----
-
-### US-8.2
-
-**User Story:**
-As an **Admin**, I want to view system-wide analytics (total users, properties, revenue), so that I can monitor platform health.
-
-**Pre-requisite:**
-US-8.1
-
-**Acceptance Criteria:**
-- Dashboard shows key metrics with charts.
-- Data updates in real time or on page refresh.
-
----
-
-### US-8.3
-
-**User Story:**
-As an **Admin**, I want to assign or change a user's role, so that I can manage who has Owner or Tenant access.
-
-**Pre-requisite:**
-US-8.1
-
-**Acceptance Criteria:**
-- Admin can change a user's role from a dropdown.
-- Role change takes effect on the user's next login.
+- If the backend is not running, the message "Cannot connect to server. Please make sure the backend is running." is displayed.
+- The application does not crash on network errors.
 
 ---
 
