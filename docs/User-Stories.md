@@ -93,7 +93,7 @@ User is successfully logged into the system.
 **Acceptance Criteria:**
 - Clicking Logout shows a browser confirmation: "Are you sure you want to logout?"
 - Clicking Cancel keeps the user logged in.
-- Clicking OK calls the logout endpoint, clears the authentication cookie, and redirects to login.
+- Clicking OK calls the logout endpoint, which clears the access_token cookie if present (the backend endpoint itself does not require authentication), and redirects to login.
 - Accessing protected routes after logout redirects to login.
 
 ---

@@ -105,7 +105,7 @@ Features such as rent management, payment processing, tenant-property assignment
 
 ### 2.1. Product Perspective
 
-RentEase is a standalone web application built as an academic coursework project. It is not part of a larger system. The current release uses MongoDB Atlas as a cloud-hosted database and does not integrate with any external third-party services. The system consists of a FastAPI backend (Python) and a React frontend (JavaScript), communicating over a RESTful JSON API. During local development, the frontend uses a Vite development proxy to forward API requests to the backend, avoiding cross-origin issues without requiring CORS middleware.
+RentEase is a standalone web application built as an academic coursework project. It is not part of a larger system. The current release uses MongoDB Atlas as an external cloud database service, while other external integrations like payments, email, Cloudinary, Gemini, and other business services are not implemented. The system consists of a FastAPI backend (Python) and a React frontend (JavaScript), communicating over a RESTful JSON API. During local development, the frontend uses a Vite development proxy to forward API requests to the backend, avoiding cross-origin issues without requiring CORS middleware.
 
 ### 2.2. Product Functions
 
@@ -114,7 +114,7 @@ RentEase provides the following functions in the current MVP:
 1. **User Registration** — New users can register as either an Owner or a Tenant by providing their name, email, password, and role. Passwords are validated for minimum length and hashed before storage.
 2. **User Login** — Registered users authenticate with email and password. A signed JWT is stored in an HttpOnly cookie for session management.
 3. **Session Management** — The frontend checks the user's session on every page load. Sessions persist across browser refreshes until the JWT expires or the user logs out.
-4. **Logout** — Users can log out with a confirmation prompt. The authentication cookie is cleared on the server side.
+4. **Logout** — Users can log out with a confirmation prompt. The authentication cookie is cleared if present on the server side (the endpoint itself does not require authentication).
 5. **Property Creation** — Owners can create property listings with title, address, property type, monthly rent, availability status, and description.
 6. **Property Listing** — Owners can view all their properties in a grid layout.
 7. **Property Details** — Owners can view full details of any property they own.
@@ -262,7 +262,7 @@ This feature handles secure user registration, authentication, and session manag
 
 **REQ-AUTH-006:** [Implemented] The system shall provide a `GET /api/auth/me` endpoint that returns the authenticated user's ID, email, and role based on the JWT in the cookie.
 
-**REQ-AUTH-007:** [Implemented] The system shall provide a `POST /api/auth/logout` endpoint that deletes the `access_token` cookie, ending the user's session.
+**REQ-AUTH-007:** [Implemented] The system shall provide a `POST /api/auth/logout` endpoint that clears the `access_token` cookie if present. This endpoint does not require authentication to be called.
 
 **REQ-AUTH-008:** [Implemented] The system shall reject requests to protected endpoints that do not contain a valid `access_token` cookie, returning a 401 status.
 

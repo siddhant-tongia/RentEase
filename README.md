@@ -392,8 +392,8 @@ This means:
 
 - On login, the backend sets an **HttpOnly cookie** named `access_token` containing the JWT.
 - The frontend sends `credentials: 'include'` with every `fetch` request, which tells the browser to automatically include cookies.
-- **The JWT is never accessible to JavaScript** — it cannot be stolen via XSS attacks.
-- On logout, the backend deletes the cookie from the response.
+- **HttpOnly cookies prevent JavaScript from directly reading the JWT** and reduce XSS token-theft risk; they do not eliminate every security risk.
+- On logout, the backend clears the access_token cookie if present (authentication is not strictly required by the backend to call this endpoint).
 
 ---
 
@@ -405,7 +405,7 @@ This means:
 | `POST` | `/api/auth/register` | Public | Register a new user |
 | `POST` | `/api/auth/login` | Public | Log in (sets cookie) |
 | `GET` | `/api/auth/me` | Authenticated | Get current user info |
-| `POST` | `/api/auth/logout` | Authenticated | Log out (clears cookie) |
+| `POST` | `/api/auth/logout` | Public (Any) | Log out (clears access_token cookie if present; does not require auth) |
 | `POST` | `/api/properties` | Owner | Create a property |
 | `GET` | `/api/properties` | Owner | List owner's properties |
 | `GET` | `/api/properties/{id}` | Owner | View one owned property |
@@ -469,7 +469,7 @@ This means:
 ## 🔒 Security Notes
 
 - **Passwords** are hashed with Argon2 (via `pwdlib`) — never stored in plaintext
-- **JWT tokens** are stored in HttpOnly cookies — cannot be accessed by JavaScript
+- **JWT tokens** are stored in HttpOnly cookies — prevent JavaScript from directly reading the JWT and reduce XSS token-theft risk; they do not eliminate every security risk.
 - **No secrets in code** — all sensitive values (MongoDB URL, JWT secret) are in `.env` files which are git-ignored
 - **Role enforcement** — both backend API routes and frontend routes check user roles
 - **Data isolation** — owners can only access their own properties; tenants get read-only access to available listings
