@@ -4,7 +4,7 @@
 
 # RentEase
 
-**Version 1.0 approved**
+**Version 2.0 — Updated to reflect final MVP implementation**
 
 **Prepared by**
 
@@ -16,7 +16,7 @@
 
 **Shri Govindram Seksaria Institute of Technology and Science**
 
-**August 24, 2026**
+**September 2026**
 
 ---
 
@@ -45,20 +45,20 @@
   - [3.4 Communications Interfaces](#34-communications-interfaces)
 - [4. System Features](#4-system-features)
   - [4.1 User Authentication & Role-Based Access](#41-user-authentication--role-based-access)
-  - [4.2 Property & Tenant Management](#42-property--tenant-management)
-  - [4.3 Rent Tracking & QR Payment Verification](#43-rent-tracking--qr-payment-verification)
-  - [4.4 AI-Powered Assistant & Analytics](#44-ai-powered-assistant--analytics)
-  - [4.5 Maintenance Request System](#45-maintenance-request-system)
+  - [4.2 Owner Property Management](#42-owner-property-management)
+  - [4.3 Tenant Available-Property Browsing](#43-tenant-available-property-browsing)
 - [5. Other Nonfunctional Requirements](#5-other-nonfunctional-requirements)
   - [5.1 Performance Requirements](#51-performance-requirements)
   - [5.2 Safety Requirements](#52-safety-requirements)
   - [5.3 Security Requirements](#53-security-requirements)
   - [5.4 Software Quality Attributes](#54-software-quality-attributes)
   - [5.5 Business Rules](#55-business-rules)
-- [6. Other Requirements](#6-other-requirements)
+- [6. Current Limitations](#6-current-limitations)
+- [7. Future Scope](#7-future-scope)
+- [8. Other Requirements](#8-other-requirements)
 - [Appendix A: Glossary](#appendix-a-glossary)
-- [Appendix B: Analysis Models](#appendix-b-analysis-models)
-- [Appendix C: To Be Determined List](#appendix-c-to-be-determined-list)
+- [Appendix B: Analysis Models — Database Schema](#appendix-b-analysis-models--database-schema)
+- [Appendix C: API Endpoint Reference](#appendix-c-api-endpoint-reference)
 
 ---
 
@@ -66,7 +66,8 @@
 
 | Name | Date | Reason For Changes | Version |
 |------|------|---------------------|---------|
-|      |      |                     |         |
+| Team RentEase | August 2026 | Initial SRS draft with full planned scope | 1.0 |
+| Team RentEase | September 2026 | Updated to reflect final MVP implementation. Corrected tech stack, user roles, functional requirements, database schema, and security details. Moved unimplemented features to Future Scope. | 2.0 |
 
 ---
 
@@ -74,11 +75,11 @@
 
 ### 1.1. Purpose
 
-RentEase is an AI-powered web platform for small property owners and their tenants. It solves the specific problem of fragmented rental administration by bringing property records, tenant assignments, rent-status tracking, payment-proof verification, maintenance requests, and routine communication into one controlled system. For property owners, the software shall reduce missed follow-ups and manual spreadsheet or messaging work by providing a single view of occupied properties, payment evidence, outstanding maintenance tickets, and actionable AI-generated summaries. For tenants, it shall provide a reliable way to view rent obligations, submit evidence-backed maintenance requests, receive status updates, and obtain responses without depending on informal communication channels. The objective of this SRS is to define the exact functional, interface, and quality requirements for the first coursework release of RentEase.
+RentEase is a web platform for small property owners and their tenants. The current MVP release solves the core problem of property listing and discovery by providing property owners with a secure dashboard to create, manage, and maintain their property listings, and by providing tenants with a way to browse and view available rental properties. The system implements secure authentication with role-based access control, ensuring that owners and tenants can only access features appropriate to their role. The objective of this SRS is to define the exact functional, interface, and quality requirements for the first coursework release (MVP) of RentEase.
 
 ### 1.2. Document Conventions
 
-This document adheres to the IEEE 830-1998 standard for Software Requirements Specifications. Key terms and concepts are defined in Appendix A (Glossary). Headings are numbered sequentially, and cross-references are provided where necessary. All acronyms are defined upon their first use. The language used is formal and technical, suitable for a professional software development context.
+This document adheres to the IEEE 830-1998 standard for Software Requirements Specifications. Key terms and concepts are defined in Appendix A (Glossary). Headings are numbered sequentially, and cross-references are provided where necessary. All acronyms are defined upon their first use. The language used is formal and technical, suitable for a professional software development context. Requirements marked as **[Implemented]** are verified in the final codebase. Requirements marked as **[Future Scope]** are planned but not yet implemented.
 
 ### 1.3. Intended Audience and Reading Suggestions
 
@@ -86,11 +87,17 @@ The primary audience for this SRS includes students, professors, project manager
 
 ### 1.4. Product Scope
 
-RentEase is an AI-powered full-stack web application designed to streamline rental property management. It aims to simplify communication, rent collection, property tracking, and maintenance management for property owners and tenants. The system provides dedicated interfaces for administrators, owners, and tenants, offering features such as user management, financial analytics, payment tracking, and AI-driven assistance. The initial release focuses on core functionalities to establish a robust platform for efficient property management.
+RentEase is a full-stack web application designed to streamline rental property management. The current MVP implements three core capabilities:
+
+1. **Secure Authentication** — User registration and login for two roles (Owner and Tenant) with JWT-based session management using HttpOnly cookies.
+2. **Owner Property Management** — Full CRUD operations (create, read, update, delete) for property listings, scoped to the authenticated owner.
+3. **Tenant Property Browsing** — Read-only access for tenants to browse and view properties marked as available.
+
+Features such as rent management, payment processing, tenant-property assignment, maintenance requests, AI assistance, analytics, notifications, and image upload are planned as future extensions (see Section 7).
 
 ### 1.5. References
 
-● IEEE Std 830-1998 - IEEE Recommended Practice for Software Requirements Specifications.
+● IEEE Std 830-1998 — IEEE Recommended Practice for Software Requirements Specifications.
 
 ---
 
@@ -98,71 +105,81 @@ RentEase is an AI-powered full-stack web application designed to streamline rent
 
 ### 2.1. Product Perspective
 
-RentEase is a standalone, AI-powered SaaS platform that integrates various components to provide a comprehensive property management solution. It is not part of a larger system but interacts with external services such as Google Gemini API for AI functionalities, Cloudinary for media storage, and potentially third-party payment gateways in future iterations. The system will be accessible via web browsers, offering a responsive user experience across different devices.
+RentEase is a standalone web application built as an academic coursework project. It is not part of a larger system. The current release uses MongoDB Atlas as a cloud-hosted database and does not integrate with any external third-party services. The system consists of a FastAPI backend (Python) and a React frontend (JavaScript), communicating over a RESTful JSON API. During local development, the frontend uses a Vite development proxy to forward API requests to the backend, avoiding cross-origin issues without requiring CORS middleware.
 
 ### 2.2. Product Functions
 
-RentEase provides a range of functions catering to three distinct user roles: Admin, Owner, and Tenant. Key functions include user authentication and authorization, property listing and management, tenant assignment, rent collection and tracking, QR code-based payment verification, AI-powered communication assistance, complaint summarization, maintenance request handling, and comprehensive analytics and reporting for financial and operational insights.
+RentEase provides the following functions in the current MVP:
+
+1. **User Registration** — New users can register as either an Owner or a Tenant by providing their name, email, password, and role. Passwords are validated for minimum length and hashed before storage.
+2. **User Login** — Registered users authenticate with email and password. A signed JWT is stored in an HttpOnly cookie for session management.
+3. **Session Management** — The frontend checks the user's session on every page load. Sessions persist across browser refreshes until the JWT expires or the user logs out.
+4. **Logout** — Users can log out with a confirmation prompt. The authentication cookie is cleared on the server side.
+5. **Property Creation** — Owners can create property listings with title, address, property type, monthly rent, availability status, and description.
+6. **Property Listing** — Owners can view all their properties in a grid layout.
+7. **Property Details** — Owners can view full details of any property they own.
+8. **Property Update** — Owners can edit any field of their properties.
+9. **Property Deletion** — Owners can delete their properties with a confirmation prompt.
+10. **Available Property Browsing** — Tenants can browse all properties marked as "available" in a grid layout.
+11. **Available Property Details** — Tenants can view full details of any available property.
+12. **Role-Based Access Control** — Both frontend and backend enforce role restrictions. Owners cannot access tenant features and vice versa.
 
 ### 2.3. User Classes and Characteristics
 
-**Administrator**
-
-● Characteristics: System supervisor, responsible for overall platform health, user management, and high-level revenue analytics.
-
-● Privileges: Full access to all system functionalities, including user creation, modification, and deletion; system configuration; and comprehensive reporting.
-
 **Owner**
 
-● Characteristics: Landlords and property managers who manage multiple properties, assign tenants, monitor rent payments, review maintenance requests, and analyze financial reports.
+● Characteristics: Property owners who manage one or more rental properties. They need to list properties, keep listings up to date, and track which properties are available or occupied.
 
-● Privileges: Create, update, and delete property listings; assign tenants to properties; view rent payment statuses; manage maintenance requests; access financial dashboards and reports.
+● Privileges: Register, log in, create/view/update/delete own properties, view own dashboard with property count and account info. Cannot access tenant-only endpoints or pages.
 
 **Tenant**
 
-● Characteristics: Occupants who view property details, track rent due dates, make UPI payments via static QR codes, download receipts, and submit photo-backed complaints.
+● Characteristics: Individuals looking for rental properties. They need to browse available listings and view property details to make informed decisions.
 
-● Privileges: View assigned property details; track personal rent payment history; make payments; submit and track maintenance requests; download receipts.
+● Privileges: Register, log in, browse available properties, view individual property details. Cannot create, update, or delete any property. Cannot access owner-only endpoints or pages.
+
+> **Note:** An Administrator role is planned for future releases but is not implemented in the current MVP. See Section 7 (Future Scope).
 
 ### 2.4. Operating Environment
 
-RentEase is a cloud-deployed web application accessible via standard web browsers. The system is designed to operate on modern web browsers, including Google Chrome, Mozilla Firefox, Apple Safari, and Microsoft Edge, across various operating systems (Windows, macOS, Linux, Android, iOS). It is optimized for both desktop and mobile devices, ensuring a responsive user experience. The backend services will run on cloud infrastructure, leveraging containerization for scalability and reliability.
+RentEase is a locally deployed web application accessible via standard web browsers during development. The system is designed to operate on modern web browsers, including Google Chrome, Mozilla Firefox, Apple Safari, and Microsoft Edge. The backend runs on `http://127.0.0.1:8000` and the frontend runs on `http://localhost:5173` using the Vite development server. The database is hosted on MongoDB Atlas (cloud).
+
+**Runtime Requirements:**
+- **Backend:** Python 3.11+, FastAPI, Uvicorn
+- **Frontend:** Node.js 18+, npm, Vite
+- **Database:** MongoDB Atlas (cloud-hosted)
 
 ### 2.5. Design and Implementation Constraints
 
-● **Technology Stack:** Frontend developed with React, TypeScript, and Tailwind CSS; Backend with Python, FastAPI, and MongoDB Atlas.
+● **Technology Stack:** Frontend developed with React 18 and JavaScript (JSX) with plain CSS; Backend with Python, FastAPI, Pydantic, and Motor (async MongoDB driver).
 
-● **Security:** Implementation must adhere to industry best practices for web application security, including JWT for authentication, RBAC for authorization, and input sanitization.
+● **Security:** JWT-based authentication with HttpOnly cookies. Passwords hashed with Argon2 via the `pwdlib` library.
 
-● **Performance:** The system must be designed for scalability to handle a growing number of users and properties without significant degradation in performance.
+● **API Communication:** RESTful JSON API. The frontend uses the native `fetch` API with `credentials: 'include'` for cookie-based authentication. During development, Vite proxies `/api` requests to the backend at `http://127.0.0.1:8000`.
 
-● **Deployment:** The application will be deployed on cloud platforms (Vercel for frontend, Render for backend).
-
-● **External APIs:** Reliance on Google Gemini API for AI features and Cloudinary for media storage.
+● **No CORS Middleware:** The backend does not include `CORSMiddleware`. Cross-origin requests are handled by the Vite development proxy. A production deployment would require adding CORS configuration.
 
 ### 2.6. User Documentation
 
-User documentation is not planned for the initial release of RentEase. Future iterations may include a comprehensive user manual, online help, and FAQs to assist users with system functionalities and troubleshooting.
+User documentation is not planned for the initial release of RentEase. The root `README.md` in the repository serves as the primary setup and usage guide. Future iterations may include a comprehensive user manual.
 
 ### 2.7. Assumptions and Dependencies
 
 **Assumptions**
 
-● **Internet Connectivity:** Users (Admin, Owner, Tenant) are assumed to have stable internet access to use the web application.
+● Users have stable internet access for MongoDB Atlas connectivity.
 
-● **UPI-Enabled App:** Tenants are assumed to have a UPI-enabled mobile application for making rent payments via QR codes.
+● Users are using modern web browsers that support current web standards.
 
-● **Browser Compatibility:** Users are assumed to use modern web browsers that support current web standards.
+● The backend server is running before the frontend makes any API calls.
 
 **Dependencies**
 
-● **Google Gemini API:** The AI-powered features of RentEase are dependent on the availability and functionality of the Google Gemini API.
+● **MongoDB Atlas:** The system relies on MongoDB Atlas for its database services. A valid connection string must be configured in the backend `.env` file.
 
-● **Cloudinary:** Media storage and delivery (e.g., property images, maintenance photos) are dependent on the Cloudinary service.
+● **Python Packages:** FastAPI, Uvicorn, Motor, Pydantic, PyJWT, pwdlib, python-dotenv (see `requirements.txt`).
 
-● **MongoDB Atlas:** The system relies on MongoDB Atlas for its database services.
-
-● **External Email Service:** The notification system is dependent on an external email service (e.g., SMTP).
+● **Node.js Packages:** React, React DOM, React Router DOM, Vite (see `package.json`).
 
 ---
 
@@ -170,45 +187,45 @@ User documentation is not planned for the initial release of RentEase. Future it
 
 ### 3.1. User Interfaces
 
-RentEase will provide a clean, intuitive, and responsive web-based user interface for each user role (Admin, Owner, Tenant). The UI will be built using React, TypeScript, and Tailwind CSS, ensuring a consistent design language and user experience across different devices. Key UI components include:
+RentEase provides a clean, responsive web-based user interface for each user role. The UI is built using React 18 with plain CSS, ensuring a consistent design and user experience across different devices. Key UI components include:
 
-● **Login/Registration Pages:** Secure access for all user roles.
+● **Login and Registration Pages:** Secure form-based access for all users with client-side and server-side validation.
 
-● **Dashboards:** Role-specific dashboards providing an overview of relevant information (e.g., property status for Owners, system health for Admins, upcoming rent for Tenants).
+● **Owner Dashboard:** Displays account information (email, role) and a summary card showing the total number of properties with a "Manage Properties" link.
 
-● **Forms:** Intuitive forms for data entry, such as adding new properties, assigning tenants, or submitting maintenance requests.
+● **Owner Properties Page:** A responsive grid of property cards with View, Edit, and Delete actions, plus an "Add Property" button.
 
-● **Navigation:** Clear and consistent navigation menus to access different sections of the application.
+● **Property Form:** A shared create/edit form with fields for title, address, property type, monthly rent, availability, and description.
 
-● **Visualizations:** Chart.js will be used to render financial analytics and other data visualizations for Owners and Admins.
+● **Property Detail Pages:** Full-detail views for both owners (with Edit/Delete actions) and tenants (read-only).
+
+● **Tenant Properties Page:** A responsive grid of available property cards with only a "View Details" action.
+
+● **Navbar:** Role-aware navigation with dynamic links based on authentication state and user role.
+
+● **Error and Loading States:** Consistent `ErrorMessage` and `LoadingMessage` components used across all pages.
+
+● **404 Page:** A catch-all page for undefined routes with a "Go Home" link.
 
 ### 3.2. Hardware Interfaces
 
-RentEase is a web application and does not directly interface with specific hardware beyond standard client devices (desktops, laptops, smartphones, tablets) and network infrastructure. The system assumes the availability of a standard internet connection and a display device for user interaction.
+RentEase is a web application and does not directly interface with specific hardware beyond standard client devices (desktops, laptops, smartphones, tablets) and network infrastructure.
 
 ### 3.3. Software Interfaces
 
-● **Frontend-Backend Communication:** RESTful API communication between the React frontend and FastAPI backend using Axios.
+● **Frontend-Backend Communication:** RESTful API communication between the React frontend and FastAPI backend using the native `fetch` API with `credentials: 'include'` for cookie handling.
 
-● **Database Interface:** The FastAPI backend interfaces with MongoDB Atlas for data storage and retrieval.
+● **Database Interface:** The FastAPI backend interfaces with MongoDB Atlas using the `motor` async driver for data storage and retrieval.
 
-● **AI Services:** Integration with Google Gemini API for AI-powered features.
-
-● **Media Management:** Integration with Cloudinary for image and PDF storage and delivery.
-
-● **Email Services:** Integration with an SMTP library (e.g., smtplib) for sending email notifications.
-
-● **Payment Gateways:** Future integration with payment gateways like Razorpay/Stripe for automated payment processing.
+● **Development Proxy:** The Vite development server proxies all `/api` requests to `http://127.0.0.1:8000`, allowing the frontend and backend to run on different ports without CORS issues.
 
 ### 3.4. Communications Interfaces
 
-● **HTTP/HTTPS:** All client-server communication will occur over secure HTTP/HTTPS protocols.
+● **HTTP:** All client-server communication occurs over HTTP during local development. The backend listens on port 8000 and the frontend dev server on port 5173.
 
-● **JSON:** Data exchange between the frontend and backend will primarily use JSON format.
+● **JSON:** All data exchange between the frontend and backend uses JSON format.
 
-● **WebSockets:** The system shall use WebSockets as a mandatory communication mechanism for the real-time AI chat assistant and live system notifications. The connection shall support bidirectional message exchange, reconnection after temporary network failure, and delivery of authenticated messages only to the relevant user or role.
-
-● **Email:** SMTP protocol for sending system notifications and alerts.
+● **Cookies:** Authentication state is maintained via an HttpOnly cookie (`access_token`) set by the backend on login and cleared on logout.
 
 ---
 
@@ -218,129 +235,109 @@ RentEase is a web application and does not directly interface with specific hard
 
 #### 4.1.1. Description and Priority
 
-This feature handles secure user registration, authentication, and session management while enforcing Role-Based Access Control (RBAC) to restrict access based on user privileges (Admin, Owner, Tenant). This feature is **Critical** priority because it is the primary gateway for protecting sensitive user data and preventing unauthorized access to the application.
+This feature handles secure user registration, authentication, and session management while enforcing role-based access control to restrict access based on user privileges (Owner, Tenant). This feature is **Critical** priority because it is the primary gateway for protecting sensitive user data and preventing unauthorized access.
 
 #### 4.1.2. Stimulus/Response Sequences
 
-1. The user provides credentials (email and password) via the registration or login interface.
-2. The system validates the input for format compliance and verifies credentials against the stored hash in the database.
-3. Upon successful validation, the system generates a signed JWT and securely transmits it to the client via an HttpOnly cookie.
-4. The system grants the user access to authorized routes and features based on their assigned role in the JWT.
-5. Upon the user requesting logout, the system invalidates the session and clears the authentication token.
+1. The user provides registration details (name, email, password, role) via the registration form.
+2. The system validates input (email format via Pydantic `EmailStr`, password minimum length of 8 characters via `SecretStr` with `min_length=8`, name length 2–50 characters, role must be "owner" or "tenant").
+3. The system checks for duplicate email. If duplicate, returns 409 "Email already registered".
+4. The system hashes the password using Argon2 (via `pwdlib`) and stores the user document in the `users` collection.
+5. For login, the user provides email and password. The system verifies the password hash and, on success, generates a signed JWT containing `user_id`, `email`, `role`, and `exp`.
+6. The JWT is stored in an HttpOnly cookie (`access_token`) with `samesite=lax` and a configurable expiration time.
+7. On each protected request, the `get_current_user` dependency extracts and validates the JWT from the cookie.
+8. On logout, the cookie is deleted from the response.
 
-### 4.2. Property & Tenant Management
+#### 4.1.3. Functional Requirements
+
+**REQ-AUTH-001:** [Implemented] The system shall allow a new user to register by providing a name (2–50 characters), a valid email address, a password (minimum 8 characters), and a role ("owner" or "tenant").
+
+**REQ-AUTH-002:** [Implemented] The system shall reject registration if the provided email is already associated with an existing account, returning a 409 status with the message "Email already registered".
+
+**REQ-AUTH-003:** [Implemented] The system shall store passwords as secure Argon2 hashes using the `pwdlib` library. Plaintext passwords shall never be stored.
+
+**REQ-AUTH-004:** [Implemented] The system shall allow a registered user to log in by providing their email and password. Invalid credentials shall result in a 401 status with "Invalid email or password".
+
+**REQ-AUTH-005:** [Implemented] Upon successful login, the system shall generate a signed JWT containing the user's ID, email, role, and expiration time, and shall store it in an HttpOnly cookie named `access_token`.
+
+**REQ-AUTH-006:** [Implemented] The system shall provide a `GET /api/auth/me` endpoint that returns the authenticated user's ID, email, and role based on the JWT in the cookie.
+
+**REQ-AUTH-007:** [Implemented] The system shall provide a `POST /api/auth/logout` endpoint that deletes the `access_token` cookie, ending the user's session.
+
+**REQ-AUTH-008:** [Implemented] The system shall reject requests to protected endpoints that do not contain a valid `access_token` cookie, returning a 401 status.
+
+**REQ-AUTH-009:** [Implemented] The system shall reject requests with an expired JWT, returning a 401 status with "Token has expired".
+
+**REQ-AUTH-010:** [Implemented] The frontend shall display a confirmation dialog before executing logout, allowing the user to cancel.
+
+**REQ-AUTH-011:** [Implemented] The frontend shall check the user's session on application load by calling `GET /api/auth/me` and shall maintain user state in a React Context.
+
+---
+
+### 4.2. Owner Property Management
 
 #### 4.2.1. Description and Priority
 
-This feature allows Owners to manage their real estate portfolio, covering property listing, tenant assignment, and leasing lifecycle management. This feature is **High** priority because the platform cannot perform its primary function of property administration without the underlying data structures for properties and tenants.
+This feature allows authenticated Owners to manage their property portfolio through full CRUD (Create, Read, Update, Delete) operations. Each property is linked to its owner via the `owner_id` field, ensuring data isolation between different owners. This feature is **High** priority because property management is the core business function of the platform.
 
 #### 4.2.2. Stimulus/Response Sequences
 
-6. The Owner logs in and navigates to the 'Add Property' interface.
-7. The Owner inputs property details and uploads images, which the system transmits to the media service (Cloudinary).
-8. The system validates the input, stores the property metadata and image URLs, and updates the Owner's dashboard.
-9. The Owner selects a registered tenant and assigns them to the property, defining the lease start and rent terms.
-10. The system links the tenant to the property record, effectively starting the tenancy period.
+1. The Owner navigates to the "Add Property" form and submits property details.
+2. The system validates the input (address 5–100 chars required, rent > 0 required, property type from allowed values, etc.) and stores the property in the `properties` collection with the owner's user ID.
+3. The Owner views their property list, which fetches only properties matching their `owner_id`.
+4. The Owner views, edits, or deletes a specific property. All operations verify that the `owner_id` matches the authenticated user.
+5. If a non-owner or different owner attempts to access a property, the system returns 403 or 404 respectively.
 
-### 4.3. Rent Tracking & QR Payment Verification
+#### 4.2.3. Functional Requirements
+
+**REQ-PROP-001:** [Implemented] The system shall allow an authenticated owner to create a property by providing: title (optional, 2–100 chars), address (required, 5–100 chars), property_type (required, one of: "apartment", "house", "room", "other"), monthly_rent (required, float > 0), availability (required, one of: "available", "occupied"), and description (optional, max 500 chars).
+
+**REQ-PROP-002:** [Implemented] The system shall store each property with an `owner_id` field matching the authenticated owner's user ID from the JWT.
+
+**REQ-PROP-003:** [Implemented] The system shall allow an authenticated owner to view a list of all properties they own via `GET /api/properties`. Only properties belonging to that owner shall be returned.
+
+**REQ-PROP-004:** [Implemented] The system shall allow an authenticated owner to view one of their properties via `GET /api/properties/{property_id}`. The system shall verify both the property ID and owner ID match.
+
+**REQ-PROP-005:** [Implemented] The system shall allow an authenticated owner to update their property via `PUT /api/properties/{property_id}`. If the property does not exist or does not belong to the owner, a 404 shall be returned.
+
+**REQ-PROP-006:** [Implemented] The system shall allow an authenticated owner to delete their property via `DELETE /api/properties/{property_id}`. If the property does not exist or does not belong to the owner, a 404 shall be returned.
+
+**REQ-PROP-007:** [Implemented] The system shall reject property creation, listing, viewing, updating, and deleting requests from users with the "tenant" role, returning a 403 status.
+
+**REQ-PROP-008:** [Implemented] The system shall validate the format of `property_id` path parameters. Invalid ObjectId formats shall result in a 400 "Invalid property ID format" response.
+
+**REQ-PROP-009:** [Implemented] The frontend shall display a confirmation dialog before deleting a property, allowing the user to cancel the operation.
+
+**REQ-PROP-010:** [Implemented] The frontend shall provide a shared form component for both creating and editing properties, pre-filling fields with existing data in edit mode.
+
+---
+
+### 4.3. Tenant Available-Property Browsing
 
 #### 4.3.1. Description and Priority
 
-This feature facilitates end-to-end rent collection by providing static UPI-based QR code generation for tenants and a verification workflow for Owners to confirm payments. This feature is **High** priority because financial integrity and accurate tracking are essential for user trust and successful rental management.
+This feature allows authenticated Tenants to browse and view properties that are currently marked as "available". Tenants have read-only access and cannot create, update, or delete properties. This feature is **High** priority because tenant browsing is the primary mechanism for connecting tenants with available properties.
 
 #### 4.3.2. Stimulus/Response Sequences
 
-11. The system generates a unique static UPI QR code for each property and displays it to the assigned Tenant.
-12. The Tenant makes a payment via an external UPI app and submits the transaction's UTR (Unique Transaction Reference) through the system.
-13. The system records the payment as 'Pending' and notifies the Owner via an in-app notification.
-14. The Owner reviews the UTR against their bank records and marks the payment as 'Verified' or 'Rejected' with a reason.
-15. Upon verification, the system updates the rent status, records the transaction in the history, and generates a downloadable receipt for the Tenant.
+1. The Tenant navigates to the "Browse Properties" page.
+2. The system fetches all properties with `availability: "available"` from the database and returns them without exposing the `owner_id` or internal `_id`.
+3. The Tenant clicks on a property to view its full details.
+4. The system fetches the specific property, verifying it is still available. If not found or no longer available, a 404 is returned.
 
 #### 4.3.3. Functional Requirements
 
-**REQ-RENT-001:** The system shall generate a unique static UPI QR code for each active property.
+**REQ-TENANT-001:** [Implemented] The system shall allow an authenticated tenant to view all properties with `availability: "available"` via `GET /api/properties/available`.
 
-**REQ-RENT-002:** The system shall enable Tenants to view their current payment status and upcoming rent due dates.
+**REQ-TENANT-002:** [Implemented] The system shall strip `_id` and `owner_id` fields from tenant-facing property responses, replacing `_id` with a string `property_id`.
 
-**REQ-RENT-003:** The system shall allow Tenants to submit a payment record, including the mandatory UTR and payment date.
+**REQ-TENANT-003:** [Implemented] The system shall allow an authenticated tenant to view one available property via `GET /api/properties/available/{property_id}`. If the property does not exist or is not available, a 404 shall be returned.
 
-**REQ-RENT-004:** The system shall allow Owners to manually verify payments by comparing the submitted UTR with their verified financial data.
+**REQ-TENANT-004:** [Implemented] The system shall reject requests to the tenant available-property endpoints from users with the "owner" role, returning a 403 status.
 
-**REQ-RENT-005:** The system shall automatically generate and allow download of rent receipts upon successful payment verification.
+**REQ-TENANT-005:** [Implemented] The frontend shall display a friendly empty state message when no available properties exist.
 
-**REQ-RENT-006:** The system shall maintain an immutable historical record of all rent transactions per tenant and per property.
-
-### 4.4. AI-Powered Assistant & Analytics
-
-#### 4.4.1. Description and Priority
-
-This feature integrates the Google Gemini API to provide automated communication, complaint summarization, and monthly financial reporting to Owners and Admins. This feature is **Medium** priority because while it provides significant operational efficiency and competitive advantage, the core property management workflows remain operational without it.
-
-#### 4.4.2. Stimulus/Response Sequences
-
-16. The user (Owner or Tenant) interacts with the AI assistant through the chat interface.
-17. The system transmits the user's query and relevant context (e.g., property/tenant details) to the Gemini API.
-18. The Gemini API processes the input and returns a response, which the system displays to the user.
-19. The system monitors maintenance and communication logs; when requested or scheduled, it aggregates data to generate a monthly report.
-20. The system presents the report, including financial summaries and occupancy trends, to the Owner or Admin dashboard.
-
-#### 4.4.3. Functional Requirements
-
-**REQ-AI-001:** The system shall provide a domain-aware AI chat interface capable of answering common rental-related queries.
-
-**REQ-AI-002:** The system shall automatically send AI-generated rent reminders to tenants via in-app notifications and email before the due date.
-
-**REQ-AI-003:** The system shall utilize the Gemini API to analyze tenant complaints and provide concise, actionable summaries for the Owner.
-
-**REQ-AI-004:** The system shall automatically generate and display monthly business reports, covering financial data, occupancy rates, and revenue analytics.
-
-**REQ-AI-005:** The system shall maintain secure integration with the Google Gemini API, ensuring data privacy and correct API key handling.
-
-### 4.5. Maintenance Request System
-
-#### 4.5.1 Description and Priority
-
-The Maintenance Request System enables a Tenant to report a problem affecting an assigned property and enables the responsible Owner to review, prioritize, assign, communicate, and close the request. The feature is **High** priority because unresolved maintenance can affect habitability, safety, tenant satisfaction, and the Owner's ability to manage the property. Each request shall receive a priority level using the following rule: **Critical** when the report indicates an immediate threat to life, personal safety, security, major water leakage, fire, gas, or loss of an essential service; **High** when the issue materially affects habitability or may cause significant property damage if not addressed promptly; **Medium** when the issue affects normal use but does not create an immediate safety or damage risk; and **Low** when the issue is minor, cosmetic, or suitable for routine servicing. The Tenant may suggest a priority, but the system shall calculate an initial priority from the selected category and keywords, and the Owner may adjust it with a recorded reason.
-
-#### 4.5.2 Stimulus/Response Sequences
-
-1. The Tenant selects the assigned property, enters a title and description, selects an issue category, optionally suggests a priority, and attaches photographs.
-2. The system validates that the Tenant is assigned to the selected property, stores the request, calculates the initial priority, and sets the status to Open.
-3. The system routes the request to the Owner associated with the property and sends an in-app notification through the authenticated WebSocket channel; an email notification shall be used when the Owner is offline or when configured as a fallback.
-4. The Owner reviews the request, may change its priority, and changes the status to Acknowledged or In Progress.
-5. The Owner may add a response, request additional information, or mark the request Resolved.
-6. The Tenant receives each status or message update in real time, may confirm resolution, or may reopen the request with an explanation.
-7. The system records the complete history, including timestamps, actors, status changes, priority changes, notifications, and uploaded evidence.
-
-#### 4.5.3 Functional Requirements
-
-**REQ-MNT-001:** The system shall allow an authenticated Tenant to create a maintenance request only for a property to which that Tenant is currently assigned.
-
-**REQ-MNT-002:** The system shall require a non-empty title, description, issue category, and property identifier; it shall reject incomplete or invalid submissions with a clear error message.
-
-**REQ-MNT-003:** The system shall accept optional image attachments, validate their file type and size, store them using the configured media service, and associate their URLs with the request.
-
-**REQ-MNT-004:** The system shall assign an initial priority of Critical, High, Medium, or Low according to the safety, habitability, damage-risk, and routine-maintenance rules defined in Section 4.5.1.
-
-**REQ-MNT-005:** The system shall set every newly accepted request to Open and record its creation timestamp, submitting Tenant, property, category, description, attachments, and calculated priority.
-
-**REQ-MNT-006:** The system shall route each request to the Owner identified by the property record; if no responsible Owner exists, the system shall flag the request for Administrator attention and notify the Administrator.
-
-**REQ-MNT-007:** The system shall notify the responsible Owner of a new request and shall include the request identifier, property, title, priority, submission time, and a link to the request details.
-
-**REQ-MNT-008:** The system shall deliver new-request, status-change, priority-change, and Owner-message events through WebSockets to authorized connected users and shall prevent users from receiving another user's events.
-
-**REQ-MNT-009:** The system shall provide the Owner with actions to acknowledge, start, comment on, reprioritize, resolve, and close a request. A priority change shall require a reason and shall be added to the request history.
-
-**REQ-MNT-010:** The system shall notify the Tenant whenever the Owner changes the status, priority, or response content. If real-time delivery fails, the event shall remain available in the in-app notification list and shall be sent by email when configured.
-
-**REQ-MNT-011:** The system shall allow the Tenant to view a chronological list of submitted requests with their status, priority, latest update, and evidence, and shall allow reopening only a request previously marked Resolved or Closed.
-
-**REQ-MNT-012:** The system shall maintain an immutable audit history of request creation, routing, notifications, status changes, priority changes, messages, and closure details, including the user and timestamp for each event.
-
-**REQ-MNT-013:** The system shall prevent unauthorized users from viewing, editing, or downloading maintenance requests and attachments belonging to another Tenant or property.
-
-**REQ-MNT-014:** The system shall display an actionable error and preserve unsent form data when a request submission, attachment upload, notification, or WebSocket delivery fails.
+**REQ-TENANT-006:** [Implemented] The frontend shall not display edit, delete, or create actions on tenant property pages.
 
 ---
 
@@ -348,158 +345,196 @@ The Maintenance Request System enables a Tenant to report a problem affecting an
 
 ### 5.1. Performance Requirements
 
-● **Response Time:** The system shall respond to user requests (e.g., page loads, form submissions, API calls) within 2-3 seconds under normal load conditions.
+● **Response Time:** The system shall respond to user requests (page loads, form submissions, API calls) within 2–3 seconds under normal load conditions on a local development setup.
 
-● **Scalability:** The system shall be capable of supporting up to 100 concurrent users and managing data for 1000 properties and 5000 tenants without significant performance degradation.
-
-● **Availability:** The system shall be available 99.5% of the time, excluding scheduled maintenance.
+● **Database:** The system uses MongoDB Atlas with the Motor async driver for non-blocking database operations, supporting efficient concurrent request handling.
 
 ### 5.2. Safety Requirements
 
-● The system shall implement robust error handling mechanisms to prevent data corruption or loss.
+● The system shall implement error handling to prevent data corruption. All API errors return structured JSON responses with meaningful messages.
 
-● The system shall provide clear and informative error messages to users.
+● The frontend shall display clear error messages to users and shall not crash on network failures or unexpected API responses.
 
-● All critical data shall be backed up regularly to prevent permanent loss.
+● The frontend shall handle network errors gracefully with the message "Cannot connect to server. Please make sure the backend is running."
 
 ### 5.3. Security Requirements
 
-● **Authentication:** User authentication shall be implemented using JWT (JSON Web Tokens) stored in HttpOnly cookies to mitigate Cross-Site Scripting (XSS) attacks.
+● **Authentication:** User authentication is implemented using JWT (JSON Web Tokens) stored in HttpOnly cookies to mitigate Cross-Site Scripting (XSS) token theft. The cookie is configured with `samesite=lax`.
 
-● **Authorization:** Role-Based Access Control (RBAC) shall be enforced on both frontend and backend to ensure users only access authorized resources.
+● **Token Security:** The JWT is signed using a configurable secret key (`JWT_SECRET`) with the HS256 algorithm. Token expiration is configurable via `JWT_EXPIRE_MINUTES` (default: 60 minutes).
 
-● **Data Protection:** All sensitive data (e.g., passwords) shall be stored in an encrypted format (e.g., Passlib with Argon2 hashing algorithms).
+● **Password Storage:** All passwords are hashed using Argon2 via the `pwdlib` library. Plaintext passwords are never stored or logged. The `SecretStr` Pydantic type ensures passwords are not exposed in validation error messages.
 
-● **Input Validation:** Strict Pydantic models shall be used for input validation to prevent injection attacks and other malicious data inputs.
+● **Authorization:** Role-based access control is enforced on both backend (imperative role checks in route handlers returning 403) and frontend (`ProtectedRoute` component with `allowedRoles`).
 
-● **Environment Isolation:** Sensitive credentials (API keys, database URIs) shall be stored in environment variables (.env files) and not hardcoded.
+● **Data Isolation:** Owner property operations always filter by `owner_id` from the JWT, preventing cross-owner data access.
 
-● **Communication Security:** All data transmission between client and server shall be encrypted using HTTPS.
+● **Input Validation:** Pydantic models validate all request data (email format, string lengths, numeric ranges, literal values). Invalid input returns 422 with detailed validation errors.
+
+● **Environment Isolation:** Sensitive credentials (MongoDB connection string, JWT secret) are stored in environment variables via `.env` files and are excluded from version control via `.gitignore`.
+
+● **Frontend Security:** The frontend does not store JWT tokens in `localStorage` or `sessionStorage`. All API requests use `credentials: 'include'` to send cookies automatically.
 
 ### 5.4. Software Quality Attributes
 
-● **Reliability:** The system shall operate without critical failures for a minimum of 99.5% of its operational time.
+● **Reliability:** The system validates all inputs on both frontend and backend, preventing invalid data from reaching the database.
 
-● **Maintainability:** The codebase shall be well-documented, modular, and follow established coding standards to facilitate future enhancements and bug fixes.
+● **Maintainability:** The codebase follows a clean separation of concerns: routes, schemas, database, and dependencies are in separate modules. The frontend follows a pages/components/services/context architecture.
 
-● **Usability:** The user interface shall be intuitive and easy to navigate for all user roles, requiring minimal training.
+● **Usability:** The user interface is intuitive with clear navigation, role-appropriate content, loading states, error messages, empty states, and confirmation dialogs for destructive actions.
 
-● **Portability:** The web application shall be accessible and functional across different modern web browsers and devices.
+● **Portability:** The application can run on any system with Python 3.11+, Node.js 18+, and a MongoDB Atlas connection.
 
 ### 5.5. Business Rules
 
-● A property can only be assigned to one tenant at a time.
+● A property can have one of two availability statuses: "available" or "occupied". Only "available" properties are visible to tenants.
 
-● Rent payments are due on the first day of each month.
+● An owner can only access, modify, or delete their own properties. They cannot see or modify properties belonging to other owners.
 
-● Maintenance requests must include a description; photo attachments are optional but recommended.
+● A tenant cannot create, update, or delete any property.
 
-● Only Owners can assign tenants to properties.
+● Passwords must be at least 8 characters long.
 
-● Only Admins can manage user roles.
+● Each email address can only be registered once.
+
+● User roles are assigned at registration and cannot be changed by the user.
 
 ---
 
-## 6. Other Requirements
+## 6. Current Limitations
 
-No additional specific requirements beyond those detailed in the preceding sections are identified at this time.
+RentEase currently implements secure authentication, owner-side property CRUD, and tenant read-only browsing of available properties. The following limitations exist in the current MVP:
+
+1. **No CORS Middleware:** The backend does not include CORS configuration. Cross-origin requests work only through the Vite development proxy. A production deployment would require adding `CORSMiddleware` to FastAPI.
+
+2. **No Image Upload:** Property listings are text-only. Image upload via Cloudinary is not implemented.
+
+3. **No Tenant Assignment:** There is no mechanism to assign a tenant to a specific property or manage lease terms.
+
+4. **No Payment System:** Rent tracking, UPI QR codes, UTR verification, and receipt generation are not implemented.
+
+5. **No Admin Role:** There is no administrator user class or admin dashboard.
+
+6. **No Real-Time Features:** WebSocket connections for notifications or chat are not implemented.
+
+7. **No Email Notifications:** SMTP email sending is not implemented.
+
+8. **No AI Features:** Google Gemini API integration is not implemented.
+
+9. **Local Development Only:** The application is not deployed to any cloud platform. It runs entirely on `localhost`.
+
+10. **Empty `.env.example`:** The backend `.env.example` file is empty and does not document the required environment variables.
+
+---
+
+## 7. Future Scope
+
+The following features are planned for future releases but are **not implemented** in the current MVP:
+
+| # | Feature | Description |
+|---|---|---|
+| 1 | Rent Management | Track rent due dates, amounts, and payment statuses per property |
+| 2 | Payment Tracking & QR Verification | UPI QR code generation, UTR submission, owner verification, receipt download |
+| 3 | Tenant-Property Assignment | Assign tenants to properties with lease lifecycle management |
+| 4 | Maintenance Requests | Tenant-submitted issue reports with priority, status lifecycle, and audit trail |
+| 5 | AI Assistant | Domain-aware chat powered by Google Gemini API |
+| 6 | Analytics & Reports | Monthly business reports with financial data and occupancy rates |
+| 7 | In-App Notifications | Real-time notifications via WebSockets |
+| 8 | Email Notifications | SMTP-based email notifications for offline users |
+| 9 | Image Upload | Property images via Cloudinary integration |
+| 10 | Admin Role & Panel | Platform-wide user management and system health monitoring |
+| 11 | Password Reset | Email-based password recovery |
+| 12 | Email Verification | Verify user email addresses during registration |
+| 13 | Advanced Search & Filters | Search properties by location, price range, type |
+| 14 | Pagination | Paginated listing for large datasets |
+| 15 | Production Deployment | Deploy to Vercel (frontend) and Render (backend) |
+| 16 | CORS Configuration | Add CORSMiddleware for production cross-origin support |
+| 17 | Mobile Application | Native or responsive mobile app |
+
+---
+
+## 8. Other Requirements
+
+No additional requirements at this time beyond those specified in Sections 4 and 5.
 
 ---
 
 ## Appendix A: Glossary
 
-● **AI:** Artificial Intelligence
-
-● **API:** Application Programming Interface
-
-● **CRUD:** Create, Read, Update, Delete
-
-● **FastAPI:** A modern, fast (high-performance) web framework for building APIs with Python 3.7+ based on standard Python type hints.
-
-● **JWT:** JSON Web Token, a compact, URL-safe means of representing claims to be transferred between two parties.
-
-● **LLM:** Large Language Model
-
-● **MongoDB Atlas:** A global cloud database service for MongoDB.
-
-● **Pydantic:** A Python library for data validation and settings management using Python type hints.
-
-● **QR Code:** Quick Response Code, a type of matrix barcode.
-
-● **RBAC:** Role-Based Access Control, a method of restricting system access based on the roles of individual users.
-
-● **React:** A JavaScript library for building user interfaces.
-
-● **SaaS:** Software as a Service, a software distribution model in which a third-party provider hosts applications and makes them available to customers over the Internet.
-
-● **SRS:** Software Requirements Specification
-
-● **Tailwind CSS:** A utility-first CSS framework for rapidly building custom user interfaces.
-
-● **TypeScript:** A superset of JavaScript that adds static types.
-
-● **UPI:** Unified Payments Interface, an instant real-time payment system developed by National Payments Corporation of India.
-
-● **UTR:** Unique Transaction Reference, a unique number that identifies a transaction.
+| Term | Definition |
+|---|---|
+| **JWT** | JSON Web Token — a compact, URL-safe token format used for securely transmitting information between parties |
+| **HttpOnly Cookie** | A cookie flag that prevents client-side JavaScript from accessing the cookie, mitigating XSS attacks |
+| **RBAC** | Role-Based Access Control — restricting system access based on user roles |
+| **CRUD** | Create, Read, Update, Delete — the four basic operations of persistent storage |
+| **MVP** | Minimum Viable Product — the version of a product with just enough features to be usable |
+| **Argon2** | A password-hashing algorithm that won the Password Hashing Competition in 2015 |
+| **Motor** | An async Python driver for MongoDB, built on top of PyMongo |
+| **Pydantic** | A Python library for data validation using Python type annotations |
+| **Vite** | A modern frontend build tool that provides fast development server with hot module replacement |
+| **FastAPI** | A modern, high-performance Python web framework for building APIs |
+| **ObjectId** | MongoDB's default 12-byte identifier for documents |
+| **SRS** | Software Requirements Specification |
 
 ---
 
-## Appendix B: Analysis Models
+## Appendix B: Analysis Models — Database Schema
 
-This section would typically contain visual analysis models such as Data Flow Diagrams (DFDs), Entity-Relationship Diagrams (ERDs), or Use Case Diagrams. For the purpose of this draft, we will provide a textual description of the database schema and data flow.
+The current MVP uses two MongoDB collections:
 
-### Database Schema Description
+### `users` Collection
 
-RentEase utilizes a NoSQL document database (MongoDB Atlas) with the following primary collections:
+| Field | Type | Description |
+|---|---|---|
+| `_id` | ObjectId | MongoDB auto-generated unique identifier |
+| `name` | String | User's display name (2–50 characters) |
+| `email` | String | User's email address (unique, stored lowercase) |
+| `password_hash` | String | Argon2 hash of the user's password |
+| `role` | String | User role: `"owner"` or `"tenant"` |
 
-● **Users Collection:** Stores user authentication and profile information. Fields include `_id`, `name`, `email`, `password` (hashed), `role` (`Admin`, `Owner`, `Tenant`), `profileImage`, `createdAt`.
+### `properties` Collection
 
-● **Properties Collection:** Stores details about rental properties. Fields include `_id`, `ownerId` (reference to Users), `title`, `address` (object with `street`, `city`, `state`, `coordinates`), `rent`, `securityDeposit`, `type`, `status`, `images` (array of Cloudinary URLs), `paymentQrCode` (Cloudinary URL), `createdAt`.
-
-● **Tenants Collection:** Stores tenant-specific information and their assigned property. Fields include `_id`, `userId` (reference to Users), `propertyId` (reference to Properties), `joiningDate`, `rentDueDate`, `leaseStart`, `leaseEnd`, `status`.
-
-● **Payments Collection:** Records all rent transactions. Fields include `_id`, `tenantId` (reference to Tenants), `ownerId` (reference to Users), `propertyId` (reference to Properties), `amount`, `paymentDate`, `paymentMethod` (`UPI QR`), `transactionId` (UTR), `status`, `receiptURL` (Cloudinary URL).
-
-● **Maintenance Collection:** Stores details of maintenance requests. Fields include `_id`, `tenantId` (reference to Tenants), `propertyId` (reference to Properties), `title`, `description`, `images` (array of Cloudinary URLs), `status`, `priority`, `createdAt`.
-
-● **Notifications Collection:** Stores system notifications for users. Fields include `_id`, `userId` (reference to Users), `title`, `message`, `read`, `createdAt`.
-
-### Data Flow Description
-
-Data generally flows from the user interface, through the FastAPI backend, to the MongoDB Atlas database, and back. External services like Cloudinary and Google Gemini API are integrated into this flow:
-
-21. **User Input:** Users interact with the React frontend, submitting data via forms (e.g., login, property creation, maintenance requests).
-
-22. **Frontend Processing:** React components capture user input and send it to the FastAPI backend via Axios HTTP requests.
-
-23. **Backend API (FastAPI):** The FastAPI application receives requests, validates data using Pydantic models, authenticates and authorizes users via JWT and RBAC, and processes business logic.
-
-24. **Database Interaction (MongoDB Atlas):** The backend interacts with MongoDB Atlas to store, retrieve, update, or delete data based on the request.
-
-25. **External Service Integration:**
-    - **Cloudinary:** For image and PDF uploads (e.g., property images, maintenance photos, rent receipts), the backend sends files to Cloudinary and stores the resulting URLs in MongoDB.
-    - **Google Gemini API:** For AI-powered features (e.g., chat assistant, complaint summarization, report generation), the backend sends relevant text data to the Gemini API and processes its responses.
-
-26. **Response Generation:** The FastAPI backend constructs a response (e.g., success message, data, error) and sends it back to the frontend.
-
-27. **Frontend Rendering:** The React frontend receives the response and updates the user interface accordingly, displaying data or notifications to the user.
+| Field | Type | Description |
+|---|---|---|
+| `_id` | ObjectId | MongoDB auto-generated unique identifier |
+| `owner_id` | String | ID of the owner who created the property (matches `user_id` from JWT) |
+| `title` | String / null | Property title (optional, 2–100 characters) |
+| `address` | String | Property address (required, 5–100 characters) |
+| `property_type` | String | One of: `"apartment"`, `"house"`, `"room"`, `"other"` |
+| `monthly_rent` | Float | Monthly rent amount (must be > 0) |
+| `availability` | String | One of: `"available"`, `"occupied"` |
+| `description` | String / null | Property description (optional, max 500 characters) |
 
 ---
 
-## Appendix C: To Be Determined List
+## Appendix C: API Endpoint Reference
 
-This section lists items that are currently undefined or subject to change and will be determined in future project phases.
+| Method | Endpoint | Auth | Role | Request Body | Success Response | Status |
+|---|---|---|---|---|---|---|
+| `GET` | `/api/health` | None | Public | — | `{"status": "ok", "service": "RentEase API"}` | 200 |
+| `POST` | `/api/auth/register` | None | Public | `{name, email, password, role}` | `{"message": "User registered successfully"}` | 201 |
+| `POST` | `/api/auth/login` | None | Public | `{email, password}` | `{"message": "Login successful"}` + Set-Cookie | 200 |
+| `GET` | `/api/auth/me` | Cookie | Any | — | `{user_id, email, role}` | 200 |
+| `POST` | `/api/auth/logout` | None | Any | — | `{"message": "Logout successfully"}` + Delete-Cookie | 200 |
+| `POST` | `/api/properties` | Cookie | Owner | `{title?, address, property_type, monthly_rent, availability, description?}` | `{message, property_id}` | 201 |
+| `GET` | `/api/properties` | Cookie | Owner | — | Array of owner's properties | 200 |
+| `GET` | `/api/properties/{id}` | Cookie | Owner | — | Single property object | 200 |
+| `PUT` | `/api/properties/{id}` | Cookie | Owner | `{title?, address, property_type, monthly_rent, availability, description?}` | `{message, property_id}` | 200 |
+| `DELETE` | `/api/properties/{id}` | Cookie | Owner | — | `{message, property_id}` | 200 |
+| `GET` | `/api/properties/available` | Cookie | Tenant | — | Array of available properties (no owner_id) | 200 |
+| `GET` | `/api/properties/available/{id}` | Cookie | Tenant | — | Single available property (no owner_id) | 200 |
 
-● Specific third-party payment gateway provider for automated transactions.
+### Error Responses
 
-● Detailed requirements for digital e-sign lease agreements.
+| Status | Meaning | Example |
+|---|---|---|
+| 400 | Bad Request | Invalid ObjectId format |
+| 401 | Unauthorized | Missing/expired/invalid token |
+| 403 | Forbidden | Wrong role for endpoint |
+| 404 | Not Found | Property doesn't exist or doesn't belong to user |
+| 409 | Conflict | Email already registered |
+| 422 | Validation Error | Pydantic validation failure |
 
-● Exact scope and implementation details for WhatsApp Business API integration.
+---
 
-● Specific OCR (Optical Character Recognition) library or service for lease document parsing.
-
-● Machine Learning model details for rent price prediction.
-
-● Comprehensive user manual and online help content.
-
-● Detailed UI/UX wireframes and mockups.
+*Prepared by Team RentEase — SGSITS, 2026*
