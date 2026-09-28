@@ -542,3 +542,51 @@ a:hover {
     flex-direction: column;
   }
 }
+
+.field-hint {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.admin-section h3 {
+  margin-bottom: 16px;
+  color: #1e293b;
+}
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.admin-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.admin-card-info p {
+  margin-bottom: 8px;
+  color: #475569;
+}
+
+.admin-card-document {
+  margin: 12px 0;
+}
+
+.admin-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-approve {
+  background-color: #16a34a;
+  color: white;
+}
+
+.btn-approve:hover {
+  background-color: #15803d;
+}

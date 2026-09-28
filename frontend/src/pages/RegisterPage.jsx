@@ -8,9 +8,36 @@ function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('tenant')
+  const [document, setDocument] = useState(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const handleDocumentChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) {
+      setDocument(null)
+      return
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Document must be a JPG, PNG, WebP image or PDF.')
+      setDocument(null)
+      e.target.value = ''
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Document must be less than 5MB.')
+      setDocument(null)
+      e.target.value = ''
+      return
+    }
+
+    setError('')
+    setDocument(file)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,14 +54,20 @@ function RegisterPage() {
       return
     }
 
+    if (role === 'owner' && !document) {
+      setError('Please upload an ownership proof document.')
+      return
+    }
+
     setSubmitting(true)
     try {
-      const data = await registerUser(name, email, password, role)
+      const data = await registerUser(name, email, password, role, document)
       setSuccess(data.message || 'Registration successful!')
       setName('')
       setEmail('')
       setPassword('')
       setRole('tenant')
+      setDocument(null)
     } catch (err) {
       if (err.status === 409) {
         setError('This email is already registered.')
@@ -42,6 +75,8 @@ function RegisterPage() {
         if (err.data && Array.isArray(err.data.detail)) {
           const messages = err.data.detail.map((d) => d.msg).join('. ')
           setError(messages)
+        } else if (err.data && err.data.detail) {
+          setError(err.data.detail)
         } else {
           setError('Please check your input and try again.')
         }
@@ -105,6 +140,18 @@ function RegisterPage() {
               <option value="owner">Owner</option>
             </select>
           </div>
+          {role === 'owner' && (
+            <div className="form-group">
+              <label htmlFor="document">Ownership Proof Document *</label>
+              <p className="field-hint">Upload property deed, tax receipt, or utility bill (JPG, PNG, WebP, PDF - max 5MB)</p>
+              <input
+                type="file"
+                id="document"
+                accept=".jpg,.jpeg,.png,.webp,.pdf"
+                onChange={handleDocumentChange}
+              />
+            </div>
+          )}
           <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
             {submitting ? 'Registering...' : 'Register'}
           </button>

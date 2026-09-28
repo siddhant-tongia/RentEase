@@ -10,6 +10,7 @@ import PropertyFormPage from './pages/PropertyFormPage.jsx'
 import PropertyDetailsPage from './pages/PropertyDetailsPage.jsx'
 import TenantPropertiesPage from './pages/TenantPropertiesPage.jsx'
 import TenantPropertyDetailsPage from './pages/TenantPropertyDetailsPage.jsx'
+import AdminDashboardPage from './pages/AdminDashboardPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
 function App() {
@@ -79,6 +80,16 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['tenant']}>
                 <TenantPropertyDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboardPage />
               </ProtectedRoute>
             }
           />

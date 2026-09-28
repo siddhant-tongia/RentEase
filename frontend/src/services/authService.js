@@ -1,9 +1,17 @@
 import { apiRequest } from './api.js'
 
-export async function registerUser(name, email, password, role) {
+export async function registerUser(name, email, password, role, document) {
+  const formData = new FormData()
+  formData.append('name', name)
+  formData.append('email', email)
+  formData.append('password', password)
+  formData.append('role', role)
+  if (document) {
+    formData.append('document', document)
+  }
   return apiRequest('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ name, email, password, role }),
+    body: formData,
   })
 }
 

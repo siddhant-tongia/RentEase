@@ -27,7 +27,9 @@ function LoginPage() {
       await login()
       // Get fresh user data to determine redirect
       const userData = await getMe()
-      if (userData.role === 'owner') {
+      if (userData.role === 'admin') {
+        navigate('/admin/dashboard')
+      } else if (userData.role === 'owner') {
         navigate('/owner/dashboard')
       } else {
         navigate('/tenant/properties')
@@ -35,6 +37,8 @@ function LoginPage() {
     } catch (err) {
       if (err.status === 401) {
         setError('Invalid email or password.')
+      } else if (err.status === 403) {
+        setError(err.data?.detail || 'Account not verified.')
       } else if (err.status === 422) {
         setError('Please enter a valid email and password.')
       } else {

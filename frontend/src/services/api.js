@@ -13,7 +13,7 @@ export async function apiRequest(endpoint, options = {}) {
   }
 
   // Don't set Content-Type for requests without body
-  if (!options.body) {
+  if (!options.body || options.body instanceof FormData) {
     delete config.headers['Content-Type']
   }
 

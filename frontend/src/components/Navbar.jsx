@@ -36,6 +36,11 @@ function Navbar() {
             <Link to="/tenant/properties">Browse Properties</Link>
           </>
         )}
+        {user && user.role === 'admin' && (
+          <>
+            <Link to="/admin/dashboard">Admin Panel</Link>
+          </>
+        )}
         {user && (
           <button onClick={handleLogout} className="btn btn-logout">
             Logout

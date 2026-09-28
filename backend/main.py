@@ -3,6 +3,7 @@ from database.connection import check_database_connection
 from routes.health import router as health_router
 from routes.auth import router as auth_router
 from routes.properties import router as property_router
+from routes.admin import router as admin_router
 
 app = FastAPI(title="RentEase API")
 
@@ -13,5 +14,6 @@ async def startup_event():
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(property_router)
+app.include_router(admin_router)
 
 
