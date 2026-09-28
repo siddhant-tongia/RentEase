@@ -67,6 +67,13 @@ function TenantPropertyDetailsPage() {
           </div>
         )}
       </div>
+      <div className="contact-owner-section">
+        <h3>Contact Owner</h3>
+        <div className="contact-owner-info">
+          <p><strong>Name:</strong> {property.owner_name}</p>
+          <p><strong>Phone:</strong> <a href={`tel:${property.owner_phone}`}>{property.owner_phone}</a></p>
+        </div>
+      </div>
       <Link to="/tenant/properties" className="btn btn-secondary">Back to Properties</Link>
     </div>
   )

@@ -6,6 +6,7 @@ import ErrorMessage from '../components/ErrorMessage.jsx'
 function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('tenant')
   const [document, setDocument] = useState(null)
@@ -44,8 +45,13 @@ function RegisterPage() {
     setError('')
     setSuccess('')
 
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
       setError('Please fill in all fields.')
+      return
+    }
+
+    if (phone.length < 10) {
+      setError('Please enter a valid phone number.')
       return
     }
 
@@ -61,10 +67,11 @@ function RegisterPage() {
 
     setSubmitting(true)
     try {
-      const data = await registerUser(name, email, password, role, document)
+      const data = await registerUser(name, email, phone, password, role, document)
       setSuccess(data.message || 'Registration successful!')
       setName('')
       setEmail('')
+      setPhone('')
       setPassword('')
       setRole('tenant')
       setDocument(null)
@@ -117,6 +124,17 @@ function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="phone">Phone Number</label>
+            <input
+              type="tel"
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Enter your phone number"
+              maxLength={15}
             />
           </div>
           <div className="form-group">

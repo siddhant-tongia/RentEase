@@ -9,6 +9,7 @@ from bson.errors import InvalidId
 router = APIRouter()
 
 properties_collection = database["properties"]
+users_collection = database["users"]
 
 class PropertyCreateResponse(BaseModel):
     message : str
@@ -47,6 +48,9 @@ async def view_properties(current_user : dict = Depends(get_current_user)):
     result = await cursor.to_list(length=None)
 
     for property in result:
+        owner = await users_collection.find_one({"_id":ObjectId(property["owner_id"])})
+        property["owner_name"] = owner["name"] if owner else "Unknown"
+        property["owner_phone"] = owner.get("phone","N/A") if owner else "N/A"
         property["property_id"] = str(property["_id"])
         del property["_id"]
         del property["owner_id"]
@@ -68,6 +72,9 @@ async def view_property(property_id : str, current_user : dict = Depends(get_cur
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Property not found")
 
+    owner = await users_collection.find_one({"_id":ObjectId(result["owner_id"])})
+    result["owner_name"] = owner["name"] if owner else "Unknown"
+    result["owner_phone"] = owner.get("phone","N/A") if owner else "N/A"
     result["property_id"] = str(result["_id"])
     del result["_id"]
     del result["owner_id"]

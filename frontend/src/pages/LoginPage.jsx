@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { loginUser, getMe } from '../services/authService.js'
+import { loginWithEmail, loginWithPhone, getMe } from '../services/authService.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 
 function LoginPage() {
+  const [loginMode, setLoginMode] = useState('email')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -16,16 +18,29 @@ function LoginPage() {
     e.preventDefault()
     setError('')
 
-    if (!email.trim() || !password.trim()) {
-      setError('Please fill in all fields.')
+    if (loginMode === 'email' && !email.trim()) {
+      setError('Please enter your email.')
+      return
+    }
+
+    if (loginMode === 'phone' && !phone.trim()) {
+      setError('Please enter your phone number.')
+      return
+    }
+
+    if (!password.trim()) {
+      setError('Please enter your password.')
       return
     }
 
     setSubmitting(true)
     try {
-      await loginUser(email, password)
+      if (loginMode === 'email') {
+        await loginWithEmail(email, password)
+      } else {
+        await loginWithPhone(phone, password)
+      }
       await login()
-      // Get fresh user data to determine redirect
       const userData = await getMe()
       if (userData.role === 'admin') {
         navigate('/admin/dashboard')
@@ -36,11 +51,11 @@ function LoginPage() {
       }
     } catch (err) {
       if (err.status === 401) {
-        setError('Invalid email or password.')
+        setError('Invalid credentials.')
       } else if (err.status === 403) {
         setError(err.data?.detail || 'Account not verified.')
       } else if (err.status === 422) {
-        setError('Please enter a valid email and password.')
+        setError('Please check your input and try again.')
       } else {
         setError(err.message || 'Something went wrong. Please try again.')
       }
@@ -53,18 +68,48 @@ function LoginPage() {
     <div className="page auth-page">
       <div className="auth-card">
         <h2>Login</h2>
+        <div className="login-toggle">
+          <button
+            type="button"
+            className={`toggle-btn ${loginMode === 'email' ? 'active' : ''}`}
+            onClick={() => setLoginMode('email')}
+          >
+            Email
+          </button>
+          <button
+            type="button"
+            className={`toggle-btn ${loginMode === 'phone' ? 'active' : ''}`}
+            onClick={() => setLoginMode('phone')}
+          >
+            Phone
+          </button>
+        </div>
         <ErrorMessage message={error} />
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-            />
-          </div>
+          {loginMode === 'email' ? (
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+              />
+            </div>
+          ) : (
+            <div className="form-group">
+              <label htmlFor="phone">Phone Number</label>
+              <input
+                type="tel"
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter your phone number"
+                maxLength={15}
+              />
+            </div>
+          )}
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input

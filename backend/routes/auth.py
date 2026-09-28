@@ -13,7 +13,8 @@ from utils.cloudinary_helper import upload_file
 load_dotenv()
 
 class LoginRequest(BaseModel):
-    email : str
+    email : str | None = None
+    phone : str | None = None
     password : str
 
 class MessageResponce(BaseModel):
@@ -35,6 +36,7 @@ if not JWT_SECRET:
 async def register(
     name : str = Form(...,min_length=2,max_length=50),
     email : str = Form(...),
+    phone : str = Form(...,min_length=10,max_length=15),
     password : str = Form(...,min_length=8),
     role : str = Form(...),
     document : UploadFile | None = File(None)
@@ -55,6 +57,16 @@ async def register(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered"
+        )
+
+    existing_phone = await users_collection.find_one(
+        {"phone": phone}
+    )
+
+    if existing_phone:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Phone number already registered"
         )
 
     if role == "owner" and not document:
@@ -87,6 +99,7 @@ async def register(
     user_document = {
         "name":name,
         "email":email,
+        "phone":phone,
         "password_hash":hashed_password,
         "role":role,
         "status":"pending" if role == "owner" else "approved"
@@ -108,15 +121,25 @@ async def register(
 
 @router.post("/api/auth/login",response_model=MessageResponce)
 async def login(detail:LoginRequest,response:Response):
-    email = str(detail.email).lower()
-    user = await users_collection.find_one(
-        {"email":email}
-    )
+    if not detail.email and not detail.phone:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Email or phone number is required"
+        )
+
+    if detail.email:
+        user = await users_collection.find_one(
+            {"email":detail.email.lower()}
+        )
+    else:
+        user = await users_collection.find_one(
+            {"phone":detail.phone}
+        )
 
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            detail="Invalid credentials"
         )
 
     password_is_valid = password_hash.verify(
