@@ -6,7 +6,7 @@ password_hash = PasswordHash.recommended()
 users_collection = database["users"]
 
 async def seed_admin():
-    admin_email = "shouryarajsinghchauhan7@gmail.com"
+    admin_email = "admin@test.com"
     admin_password = "TestPassword123"
 
     existing = await users_collection.find_one({"email":admin_email})
