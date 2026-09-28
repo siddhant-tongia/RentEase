@@ -17,6 +17,8 @@ function PropertyFormPage() {
     availability: 'available',
     description: '',
   })
+  const [newImages, setNewImages] = useState([])
+  const [existingImages, setExistingImages] = useState([])
   const [loading, setLoading] = useState(isEditing)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -34,6 +36,7 @@ function PropertyFormPage() {
             availability: data.availability || 'available',
             description: data.description || '',
           })
+          setExistingImages(data.image_urls || [])
         } catch (err) {
           setError(err.message)
         } finally {
@@ -49,6 +52,43 @@ function PropertyFormPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handleImageAdd = (e) => {
+    const files = Array.from(e.target.files)
+    const totalImages = existingImages.length + newImages.length + files.length
+
+    if (totalImages > 3) {
+      setError('Maximum 3 images allowed.')
+      e.target.value = ''
+      return
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    for (const file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        setError('Images must be JPG, PNG or WebP.')
+        e.target.value = ''
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Each image must be less than 5MB.')
+        e.target.value = ''
+        return
+      }
+    }
+
+    setError('')
+    setNewImages((prev) => [...prev, ...files])
+    e.target.value = ''
+  }
+
+  const removeNewImage = (index) => {
+    setNewImages((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const removeExistingImage = (index) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -62,21 +102,32 @@ function PropertyFormPage() {
       return
     }
 
-    const payload = {
-      title: formData.title.trim() || null,
-      address: formData.address.trim(),
-      property_type: formData.property_type,
-      monthly_rent: parseFloat(formData.monthly_rent),
-      availability: formData.availability,
-      description: formData.description.trim() || null,
+    const submitData = new FormData()
+    if (formData.title.trim()) {
+      submitData.append('title', formData.title.trim())
+    }
+    submitData.append('address', formData.address.trim())
+    submitData.append('property_type', formData.property_type)
+    submitData.append('monthly_rent', parseFloat(formData.monthly_rent))
+    submitData.append('availability', formData.availability)
+    if (formData.description.trim()) {
+      submitData.append('description', formData.description.trim())
+    }
+
+    for (const image of newImages) {
+      submitData.append('images', image)
+    }
+
+    if (isEditing) {
+      submitData.append('existing_images', existingImages.join(','))
     }
 
     setSubmitting(true)
     try {
       if (isEditing) {
-        await updateProperty(propertyId, payload)
+        await updateProperty(propertyId, submitData)
       } else {
-        await createProperty(payload)
+        await createProperty(submitData)
       }
       navigate('/owner/properties')
     } catch (err) {
@@ -84,6 +135,8 @@ function PropertyFormPage() {
         if (err.data && Array.isArray(err.data.detail)) {
           const messages = err.data.detail.map((d) => d.msg).join('. ')
           setError(messages)
+        } else if (err.data && err.data.detail) {
+          setError(err.data.detail)
         } else {
           setError('Please check your input and try again.')
         }
@@ -94,6 +147,8 @@ function PropertyFormPage() {
       setSubmitting(false)
     }
   }
+
+  const totalImages = existingImages.length + newImages.length
 
   if (loading) return <LoadingMessage message="Loading property..." />
 
@@ -178,6 +233,35 @@ function PropertyFormPage() {
             maxLength={500}
             rows={4}
           />
+        </div>
+        <div className="form-group">
+          <label>Property Images (max 3)</label>
+          <div className="image-preview-grid">
+            {existingImages.map((url, index) => (
+              <div key={`existing-${index}`} className="image-preview-item">
+                <img src={url} alt={`Property ${index + 1}`} />
+                <button type="button" className="image-remove-btn" onClick={() => removeExistingImage(index)}>✕</button>
+              </div>
+            ))}
+            {newImages.map((file, index) => (
+              <div key={`new-${index}`} className="image-preview-item">
+                <img src={URL.createObjectURL(file)} alt={`New ${index + 1}`} />
+                <button type="button" className="image-remove-btn" onClick={() => removeNewImage(index)}>✕</button>
+              </div>
+            ))}
+            {totalImages < 3 && (
+              <label className="image-add-btn">
+                <span>+ Add</span>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp"
+                  onChange={handleImageAdd}
+                  multiple
+                  hidden
+                />
+              </label>
+            )}
+          </div>
         </div>
         <div className="form-actions">
           <button type="submit" className="btn btn-primary" disabled={submitting}>

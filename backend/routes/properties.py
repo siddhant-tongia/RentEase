@@ -1,10 +1,11 @@
-from fastapi import APIRouter,status,Depends,HTTPException
+from fastapi import APIRouter,status,Depends,HTTPException,Form,File,UploadFile
 from pydantic import BaseModel
-from schemas.property import PropertyCreate
+from typing import List
 from dependency import get_current_user
 from database.connection import database
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
+from utils.cloudinary_helper import upload_file
 
 router = APIRouter()
 
@@ -15,20 +16,59 @@ class PropertyCreateResponse(BaseModel):
     message : str
     property_id : str
 
+ALLOWED_IMAGE_TYPES = ["image/jpeg","image/png","image/webp"]
 
 @router.post("/api/properties",status_code=status.HTTP_201_CREATED,response_model=PropertyCreateResponse)
-async def create_property(property_data : PropertyCreate,current_user : dict = Depends(get_current_user)):
+async def create_property(
+    title : str | None = Form(None,max_length=100),
+    address : str = Form(...,min_length=5,max_length=100),
+    property_type : str = Form(...),
+    monthly_rent : float = Form(...,gt=0),
+    availability : str = Form(...),
+    description : str | None = Form(None,max_length=500),
+    images : List[UploadFile] = File([]),
+    current_user : dict = Depends(get_current_user)
+):
     if current_user["role"] != "owner":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owner can create properties")
 
+    if property_type not in ("apartment","house","room","other"):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail="Invalid property type")
+
+    if availability not in ("available","occupied"):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail="Invalid availability value")
+
+    if len(images) > 3:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail="Maximum 3 images allowed")
+
+    image_urls = []
+    for image in images:
+        if image.content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Images must be JPG, PNG or WebP"
+            )
+
+        file_bytes = await image.read()
+        if len(file_bytes) > 5 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Each image must be less than 5MB"
+            )
+        await image.seek(0)
+
+        url = upload_file(image,folder="rentease/properties")
+        image_urls.append(url)
+
     property_document = {
         "owner_id":current_user["user_id"],
-        "title": property_data.title,
-        "address": property_data.address,
-        "property_type": property_data.property_type,
-        "monthly_rent": property_data.monthly_rent,
-        "availability": property_data.availability,
-        "description": property_data.description
+        "title":title,
+        "address":address,
+        "property_type":property_type,
+        "monthly_rent":monthly_rent,
+        "availability":availability,
+        "description":description,
+        "image_urls":image_urls
     }
 
     result = await properties_collection.insert_one(property_document)
@@ -39,7 +79,7 @@ async def create_property(property_data : PropertyCreate,current_user : dict = D
     }
 
 @router.get("/api/properties/available")
-async def view_properties(current_user : dict = Depends(get_current_user)):
+async def view_available_properties(current_user : dict = Depends(get_current_user)):
     if current_user["role"] != "tenant":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Tenants can see the property")
     
@@ -58,7 +98,7 @@ async def view_properties(current_user : dict = Depends(get_current_user)):
     return result
 
 @router.get("/api/properties/available/{property_id}")
-async def view_property(property_id : str, current_user : dict = Depends(get_current_user)):
+async def view_available_property(property_id : str, current_user : dict = Depends(get_current_user)):
     if current_user["role"] != "tenant":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Tenants can see the property")
 
@@ -81,7 +121,7 @@ async def view_property(property_id : str, current_user : dict = Depends(get_cur
     return result
 
 @router.get("/api/properties")
-async def view_properties(current_user : dict = Depends(get_current_user)):
+async def view_owner_properties(current_user : dict = Depends(get_current_user)):
     if current_user["role"] != "owner":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owner can see their properties")
 
@@ -97,7 +137,7 @@ async def view_properties(current_user : dict = Depends(get_current_user)):
     return result
 
 @router.get("/api/properties/{property_id}")
-async def view_property(property_id : str,current_user : dict = Depends(get_current_user)):
+async def view_owner_property(property_id : str,current_user : dict = Depends(get_current_user)):
     if current_user["role"] != "owner":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owner can see their properties")
 
@@ -119,7 +159,18 @@ async def view_property(property_id : str,current_user : dict = Depends(get_curr
     return result
 
 @router.put("/api/properties/{property_id}",status_code=status.HTTP_200_OK,response_model=PropertyCreateResponse)
-async def update_property(property_id : str,updated_property : PropertyCreate,current_user : dict = Depends(get_current_user)):
+async def update_property(
+    property_id : str,
+    title : str | None = Form(None,max_length=100),
+    address : str = Form(...,min_length=5,max_length=100),
+    property_type : str = Form(...),
+    monthly_rent : float = Form(...,gt=0),
+    availability : str = Form(...),
+    description : str | None = Form(None,max_length=500),
+    images : List[UploadFile] = File([]),
+    existing_images : str = Form(""),
+    current_user : dict = Depends(get_current_user)
+):
     if current_user["role"] != "owner":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only owner can make changes")
 
@@ -128,15 +179,48 @@ async def update_property(property_id : str,updated_property : PropertyCreate,cu
     except InvalidId:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid property ID")
 
+    if property_type not in ("apartment","house","room","other"):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail="Invalid property type")
+
+    if availability not in ("available","occupied"):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail="Invalid availability value")
+
     owner_id = current_user["user_id"]
 
+    kept_urls = [url for url in existing_images.split(",") if url.strip()] if existing_images else []
+
+    new_image_urls = []
+    for image in images:
+        if image.content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Images must be JPG, PNG or WebP"
+            )
+
+        file_bytes = await image.read()
+        if len(file_bytes) > 5 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Each image must be less than 5MB"
+            )
+        await image.seek(0)
+
+        url = upload_file(image,folder="rentease/properties")
+        new_image_urls.append(url)
+
+    all_image_urls = kept_urls + new_image_urls
+
+    if len(all_image_urls) > 3:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail="Maximum 3 images allowed")
+
     updated_property_document = {
-        "title": updated_property.title,
-        "address": updated_property.address,
-        "property_type": updated_property.property_type,
-        "monthly_rent": updated_property.monthly_rent,
-        "availability": updated_property.availability,
-        "description": updated_property.description
+        "title":title,
+        "address":address,
+        "property_type":property_type,
+        "monthly_rent":monthly_rent,
+        "availability":availability,
+        "description":description,
+        "image_urls":all_image_urls
     }
 
     result = await properties_collection.update_one({"_id":_id,"owner_id":owner_id},{"$set":updated_property_document})

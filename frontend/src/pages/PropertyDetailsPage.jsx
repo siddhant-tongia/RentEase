@@ -10,6 +10,7 @@ function PropertyDetailsPage() {
   const [property, setProperty] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -43,6 +44,16 @@ function PropertyDetailsPage() {
     }
   }
 
+  const images = property?.image_urls || []
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+  }
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+  }
+
   if (loading) return <LoadingMessage message="Loading property details..." />
   if (error) return (
     <div className="page">
@@ -64,6 +75,30 @@ function PropertyDetailsPage() {
           </button>
         </div>
       </div>
+      {images.length > 0 && (
+        <div className="image-carousel">
+          <div className="carousel-main">
+            {images.length > 1 && (
+              <button type="button" className="carousel-btn carousel-prev" onClick={prevImage}>◀</button>
+            )}
+            <img src={images[currentImageIndex]} alt={`Property ${currentImageIndex + 1}`} />
+            {images.length > 1 && (
+              <button type="button" className="carousel-btn carousel-next" onClick={nextImage}>▶</button>
+            )}
+          </div>
+          {images.length > 1 && (
+            <div className="carousel-dots">
+              {images.map((_, index) => (
+                <span
+                  key={index}
+                  className={`carousel-dot ${index === currentImageIndex ? 'active' : ''}`}
+                  onClick={() => setCurrentImageIndex(index)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className="details-body">
         <div className="detail-row">
           <span className="detail-label">Address:</span>

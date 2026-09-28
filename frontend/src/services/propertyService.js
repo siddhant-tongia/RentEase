@@ -1,6 +1,5 @@
 import { apiRequest } from './api.js'
 
-// Owner endpoints
 export async function getOwnerProperties() {
   return apiRequest('/properties')
 }
@@ -9,17 +8,17 @@ export async function getOwnerProperty(propertyId) {
   return apiRequest(`/properties/${propertyId}`)
 }
 
-export async function createProperty(propertyData) {
+export async function createProperty(formData) {
   return apiRequest('/properties', {
     method: 'POST',
-    body: JSON.stringify(propertyData),
+    body: formData,
   })
 }
 
-export async function updateProperty(propertyId, propertyData) {
+export async function updateProperty(propertyId, formData) {
   return apiRequest(`/properties/${propertyId}`, {
     method: 'PUT',
-    body: JSON.stringify(propertyData),
+    body: formData,
   })
 }
 
@@ -29,7 +28,6 @@ export async function deleteProperty(propertyId) {
   })
 }
 
-// Tenant endpoints
 export async function getAvailableProperties() {
   return apiRequest('/properties/available')
 }

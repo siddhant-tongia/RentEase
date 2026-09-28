@@ -8,4 +8,5 @@ class PropertyCreate(BaseModel):
     monthly_rent :float = Field(gt=0)
     availability : Literal["available","occupied"]
     description : str | None = Field(max_length=500,default=None)
+    image_urls : list[str] = []
 
