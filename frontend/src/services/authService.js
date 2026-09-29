@@ -39,3 +39,7 @@ export async function logoutUser() {
     method: 'POST',
   })
 }
+
+export async function checkAccountStatus(email) {
+  return apiRequest(`/auth/status?email=${encodeURIComponent(email)}`)
+}

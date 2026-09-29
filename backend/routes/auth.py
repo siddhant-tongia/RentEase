@@ -214,3 +214,20 @@ async def logout(response: Response):
     return {
         "message":"Logout successfully"
     }
+
+@router.get("/api/auth/status")
+async def get_account_status(email: str):
+    email = email.lower().strip()
+    user = await users_collection.find_one({"email": email})
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found"
+        )
+
+    return {
+        "email": user["email"],
+        "role": user["role"],
+        "status": user.get("status", "approved")
+    }
