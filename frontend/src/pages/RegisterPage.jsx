@@ -50,8 +50,8 @@ function RegisterPage() {
       return
     }
 
-    if (phone.length < 10) {
-      setError('Please enter a valid phone number.')
+    if (phone.trim().length < 10) {
+      setError('Phone number must be at least 10 digits.')
       return
     }
 
@@ -77,7 +77,7 @@ function RegisterPage() {
       setDocument(null)
     } catch (err) {
       if (err.status === 409) {
-        setError('This email is already registered.')
+        setError(err.data?.detail || 'This email or phone number is already registered.')
       } else if (err.status === 422) {
         if (err.data && Array.isArray(err.data.detail)) {
           const messages = err.data.detail.map((d) => d.msg).join('. ')

@@ -47,7 +47,8 @@ async def register(
             detail="Role must be owner or tenant"
         )
 
-    email = email.lower()
+    email = email.lower().strip()
+    phone = phone.strip()
 
     existing_user = await users_collection.find_one(
         {"email": email}
@@ -129,11 +130,11 @@ async def login(detail:LoginRequest,response:Response):
 
     if detail.email:
         user = await users_collection.find_one(
-            {"email":detail.email.lower()}
+            {"email":detail.email.lower().strip()}
         )
     else:
         user = await users_collection.find_one(
-            {"phone":detail.phone}
+            {"phone":detail.phone.strip()}
         )
 
     if not user:
