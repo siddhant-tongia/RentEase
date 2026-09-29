@@ -169,7 +169,6 @@ RentEase-repo/
 │           ├── adminService.js  # Admin API calls (pending owners, verify)
 │           └── propertyService.js  # Property API calls (CRUD + available)
 ├── docs/                       # Project documentation
-│   ├── SRS.md                  # Software Requirements Specification (IEEE 830)
 │   ├── User-Stories.md         # User stories with acceptance criteria
 │   ├── Test-Case.md            # Test cases
 │   └── UML-Diagrams/           # Excalidraw design diagrams
@@ -547,9 +546,8 @@ existing_images: comma-separated URLs (for PUT)
 
 | Document | Description |
 |---|---|
-| [Software Requirements Specification (SRS)](docs/SRS.md) | IEEE 830-1998 compliant SRS for the current MVP |
-| [User Stories](docs/User-Stories.md) | 20 implemented user stories with acceptance criteria |
-| [Test Cases](docs/Test-Case.md) | 25 comprehensive test cases covering all features |
+| [User Stories](docs/User-Stories.md) | 25 implemented user stories with acceptance criteria |
+| [Test Cases](docs/Test-Case.md) | 31 comprehensive test cases covering all features |
 | [UML Diagrams](docs/UML-Diagrams/) | System architecture and design diagrams (Excalidraw) |
 
 > Open `.excalidraw` files at [excalidraw.com](https://excalidraw.com) or using the [VS Code Excalidraw extension](https://marketplace.visualstudio.com/items?itemName=pomdtr.excalidraw-editor).
