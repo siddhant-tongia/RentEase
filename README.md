@@ -18,46 +18,61 @@
 
 RentEase currently implements the following core capabilities:
 
-- **Secure Authentication** — Registration and login for Owners and Tenants with JWT-based sessions using HttpOnly cookies
-- **Owner Property Management** — Full CRUD (Create, Read, Update, Delete) for property listings
-- **Tenant Property Browsing** — Read-only access to browse and view available properties
-- **Role-Based Access Control** — Owners and Tenants see only what they're authorized to access
+- **Secure Authentication & Dual Login** — Registration and login for Owners and Tenants (supporting Email+Password or Phone+Password) with JWT-based sessions using HttpOnly cookies
+- **Owner Document Verification** — Ownership proof upload for owners with admin review and approval lifecycle before access is granted
+- **Admin Verification Panel** — Dedicated administrator dashboard to review submitted ownership proofs and approve or reject accounts
+- **Owner Property Management** — Full CRUD (Create, Read, Update, Delete) for property listings with 0–3 image uploads via Cloudinary
+- **Tenant Property Browsing** — Read-only access to browse available properties with image carousels and direct owner contact phone numbers
+- **Role-Based Access Control** — Three distinct roles (Owner, Tenant, Admin) with strict data isolation
 
 ---
 
 ## ✨ Implemented Features
 
 ### 🔐 Authentication & Sessions
-- User registration with name, email, password, and role selection (Owner / Tenant)
-- Login with role-based redirect (Owner → Dashboard, Tenant → Browse Properties)
+- User registration with name, email, phone number, password, and role selection (Owner / Tenant)
+- Owner verification document upload (JPG, PNG, WebP, PDF up to 5MB via Cloudinary)
+- Real-time Owner Verification Status Card on registration with live status refresh
+- Dual login support: toggle between Email + Password or Phone Number + Password
+- Unverified owner login protection (blocked with 403 until admin approves)
+- Role-based redirect (Owner → Dashboard, Tenant → Browse Properties, Admin → Admin Panel)
 - JWT token stored in HttpOnly cookie (never in localStorage or sessionStorage)
 - Session persistence across page refreshes
 - Logout with confirmation dialog
-- Password strength enforcement (minimum 8 characters)
-- Duplicate email detection
+- Password strength enforcement (minimum 8 characters) and phone number validation (minimum 10 digits)
+- Duplicate email and duplicate phone number detection
+
+### 👑 Admin Verification
+- **Admin Panel (`/admin/dashboard`)** — Dedicated dashboard for platform administrators
+- **Pending Verifications** — List all owners awaiting approval with name, email, and phone
+- **Document Inspection** — Direct link to view uploaded ownership proofs hosted on Cloudinary
+- **One-Click Actions** — Approve or Reject owner accounts with immediate database status updates
+- **Admin Seed Utility** — `seed_admin.py` CLI script to seed administrator credentials
 
 ### 🏘️ Owner Features
 - **Dashboard** — Account info (email, role) and total property count
-- **Property List** — Responsive grid of all owned properties with View/Edit/Delete actions
-- **Create Property** — Form with title, address, type, rent, availability, and description
-- **Edit Property** — Pre-filled form to update any property field
+- **Property List** — Responsive grid of all owned properties with image thumbnails and View/Edit/Delete actions
+- **Create Property** — Form with title, address, type, rent, availability, description, and 0–3 image uploads
+- **Image Management** — Interactive image preview grid with remove buttons and gallery file picker
+- **Edit Property** — Pre-filled form to update any property field, keep existing images, or upload new ones
 - **Delete Property** — Confirmation dialog before permanent deletion
-- **Property Details** — Full detail view with all fields and action buttons
+- **Property Details** — Full detail view with image carousel, property data, and action buttons
 
 ### 🔍 Tenant Features
-- **Browse Available Properties** — Grid view of all available properties (occupied ones are hidden)
-- **View Property Details** — Read-only detail view with all property information
+- **Browse Available Properties** — Grid view of all available properties with top image thumbnails
+- **View Property Details** — Read-only detail view featuring interactive image carousel
+- **Contact Owner** — Direct access to owner name and phone number on property details
 - **Empty State** — Friendly message when no properties are available
 
 ### 🛡️ Access Control
 - Backend rejects wrong-role API requests with 403 Forbidden
-- Frontend `ProtectedRoute` component redirects unauthorized users
+- Frontend `ProtectedRoute` component redirects unauthorized users based on allowed roles
 - Owner data isolation — each owner can only see/modify their own properties
 - Tenant cannot create, edit, or delete any property
 - Unauthenticated API requests return 401 Unauthorized
 
 ### 💬 Error Handling & UX
-- Client-side form validation (required fields, password length, rent > 0)
+- Client-side form validation (required fields, password length, phone digits, rent > 0)
 - Server-side Pydantic validation with detailed error messages
 - Network error detection: "Cannot connect to server. Please make sure the backend is running."
 - Loading states on all data-fetching pages
@@ -67,17 +82,18 @@ RentEase currently implements the following core capabilities:
 
 ## 👤 User Roles & Permissions
 
-| Capability | Owner | Tenant |
-|---|:---:|:---:|
-| Register | ✅ | ✅ |
-| Login / Logout | ✅ | ✅ |
-| View Dashboard | ✅ | ❌ |
-| Create Property | ✅ | ❌ |
-| View Own Properties | ✅ | ❌ |
-| Edit Own Property | ✅ | ❌ |
-| Delete Own Property | ✅ | ❌ |
-| Browse Available Properties | ❌ | ✅ |
-| View Available Property Details | ❌ | ✅ |
+| Capability | Owner | Tenant | Admin |
+|---|:---:|:---:|:---:|
+| Register | ✅ | ✅ | ❌ (Seeded) |
+| Submit Verification Document | ✅ | ❌ | ❌ |
+| Login / Logout | ✅ (After approval) | ✅ (Immediate) | ✅ |
+| View Own Dashboard | ✅ | ❌ | ❌ |
+| Manage Own Properties (CRUD + Images) | ✅ | ❌ | ❌ |
+| Browse Available Properties & View Details | ❌ | ✅ | ❌ |
+| View Owner Contact Details | ❌ | ✅ | ❌ |
+| View Admin Panel (`/admin/dashboard`) | ❌ | ❌ | ✅ |
+| Inspect Verification Documents | ❌ | ❌ | ✅ |
+| Approve / Reject Pending Owners | ❌ | ❌ | ✅ |
 
 ---
 
@@ -87,9 +103,10 @@ RentEase currently implements the following core capabilities:
 |---|---|
 | **Frontend** | React 18, JavaScript (JSX), Plain CSS, React Router DOM v6 |
 | **Build Tool** | Vite 6 |
-| **HTTP Client** | Native `fetch` API with `credentials: 'include'` |
+| **HTTP Client** | Native `fetch` API with `credentials: 'include'` (JSON & multipart FormData) |
 | **Backend** | Python 3.11+, FastAPI, Pydantic, Uvicorn |
 | **Database** | MongoDB Atlas (via Motor async driver) |
+| **Media & Document Storage** | Cloudinary (Images & Ownership Documents) |
 | **Authentication** | JWT (PyJWT) in HttpOnly cookies |
 | **Password Hashing** | Argon2 via `pwdlib` |
 
@@ -102,6 +119,7 @@ RentEase-repo/
 ├── backend/                    # FastAPI Python backend
 │   ├── main.py                 # FastAPI app entry point
 │   ├── dependency.py           # JWT cookie authentication dependency
+│   ├── seed_admin.py           # One-time CLI script to seed admin user
 │   ├── requirements.txt        # Python dependencies
 │   ├── .env.example            # Environment variable template
 │   ├── .env                    # Your local environment variables (git-ignored)
@@ -109,41 +127,46 @@ RentEase-repo/
 │   │   └── connection.py       # MongoDB Atlas connection via Motor
 │   ├── routes/
 │   │   ├── health.py           # GET /api/health
-│   │   ├── auth.py             # Registration, login, session, logout
-│   │   └── properties.py       # Property CRUD + tenant available endpoints
-│   └── schemas/
-│       └── property.py         # PropertyCreate Pydantic schema
+│   │   ├── auth.py             # Register, login, dual login, status, me, logout
+│   │   ├── admin.py            # Pending owners list and approve/reject verification
+│   │   └── properties.py       # Property CRUD + images + tenant contact view
+│   ├── schemas/
+│   │   └── property.py         # PropertyCreate Pydantic schema
+│   └── utils/
+│       └── cloudinary_helper.py# Cloudinary config and file upload utility
 ├── frontend/                   # React frontend application
 │   ├── package.json            # Node.js dependencies and scripts
 │   ├── .env.example            # Frontend env template
 │   ├── vite.config.js          # Vite dev server config with API proxy
 │   ├── index.html              # HTML entry point
 │   └── src/
-│       ├── App.jsx             # Route definitions
+│       ├── App.jsx             # Route definitions (including admin routes)
 │       ├── main.jsx            # React root with BrowserRouter & AuthProvider
-│       ├── index.css            # Global styles (plain CSS)
+│       ├── index.css           # Global styles (plain CSS)
 │       ├── components/         # Reusable UI components
 │       │   ├── Navbar.jsx      # Role-aware navigation bar
 │       │   ├── ProtectedRoute.jsx  # Route guard by role
-│       │   ├── PropertyCard.jsx    # Property card for grid views
+│       │   ├── PropertyCard.jsx    # Property card with thumbnail for grid views
 │       │   ├── ErrorMessage.jsx    # Error alert component
 │       │   └── LoadingMessage.jsx  # Loading indicator component
 │       ├── pages/              # Page components
 │       │   ├── HomePage.jsx
-│       │   ├── LoginPage.jsx
-│       │   ├── RegisterPage.jsx
+│       │   ├── LoginPage.jsx   # Dual login (Email / Phone toggle)
+│       │   ├── RegisterPage.jsx# Form + document upload + Owner Verification Status Card
+│       │   ├── AdminDashboardPage.jsx  # Admin verification panel
 │       │   ├── OwnerDashboardPage.jsx
 │       │   ├── OwnerPropertiesPage.jsx
-│       │   ├── PropertyFormPage.jsx      # Create & Edit (shared)
-│       │   ├── PropertyDetailsPage.jsx   # Owner detail view
+│       │   ├── PropertyFormPage.jsx      # Create & Edit with 0–3 image upload
+│       │   ├── PropertyDetailsPage.jsx   # Owner detail view with image carousel
 │       │   ├── TenantPropertiesPage.jsx
-│       │   ├── TenantPropertyDetailsPage.jsx
+│       │   ├── TenantPropertyDetailsPage.jsx # Tenant detail view with carousel & owner phone
 │       │   └── NotFoundPage.jsx
 │       ├── context/
 │       │   └── AuthContext.jsx  # Auth state management (user, login, logout)
 │       └── services/
-│           ├── api.js           # Base fetch wrapper with error handling
-│           ├── authService.js   # Auth API calls (register, login, me, logout)
+│           ├── api.js           # Base fetch wrapper with FormData support
+│           ├── authService.js   # Auth API calls (register, email/phone login, status)
+│           ├── adminService.js  # Admin API calls (pending owners, verify)
 │           └── propertyService.js  # Property API calls (CRUD + available)
 ├── docs/                       # Project documentation
 │   ├── SRS.md                  # Software Requirements Specification (IEEE 830)
@@ -266,21 +289,28 @@ DATABASE_NAME=rentease
 JWT_SECRET=your-secret-key-here
 JWT_ALGORITHM=HS256
 JWT_EXPIRE_MINUTES=60
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
 > ⚠️ **Important:**
-> - Replace the `MONGODB_URL` with your actual MongoDB Atlas connection string.
-> - Replace `JWT_SECRET` with any long, random string (e.g., `mysupersecretkey123`).
+> - Replace `MONGODB_URL` with your actual MongoDB Atlas connection string.
+> - Replace `JWT_SECRET` with any long, random string.
+> - Add your `CLOUDINARY_*` credentials from your free [Cloudinary](https://cloudinary.com) dashboard.
 > - **Never commit the `.env` file to GitHub** — it is already in `.gitignore`.
 
-**How to get your MongoDB Atlas connection string:**
-1. Go to [MongoDB Atlas](https://www.mongodb.com/atlas) and sign in.
-2. Create a free cluster (if you don't have one).
-3. Click **"Connect"** → **"Connect your application"**.
-4. Copy the connection string and replace `<username>`, `<password>`, and `<cluster>` with your actual values.
-5. Make sure your IP address is whitelisted in **Network Access** (or allow access from anywhere for development: `0.0.0.0/0`).
+#### 2.6 Seed Administrator Account (One-time)
 
-#### 2.6 Start the backend server
+To create the platform administrator account in MongoDB, run:
+
+```powershell
+python seed_admin.py
+```
+
+This creates the default administrator (`admin@test.com` / `TestPassword123`) used to access the verification panel.
+
+#### 2.7 Start the backend server
 
 ```powershell
 uvicorn main:app --reload
@@ -402,48 +432,52 @@ This means:
 | Method | Endpoint | Role | Purpose |
 |---|---|---|---|
 | `GET` | `/api/health` | Public | Health check |
-| `POST` | `/api/auth/register` | Public | Register a new user |
-| `POST` | `/api/auth/login` | Public | Log in (sets cookie) |
+| `POST` | `/api/auth/register` | Public | Register new user (with phone & optional document) |
+| `POST` | `/api/auth/login` | Public | Log in via email or phone (sets cookie) |
+| `GET` | `/api/auth/status` | Public | Check account verification status by email |
 | `GET` | `/api/auth/me` | Authenticated | Get current user info |
-| `POST` | `/api/auth/logout` | Public (Any) | Log out (clears access_token cookie if present; does not require auth) |
-| `POST` | `/api/properties` | Owner | Create a property |
+| `POST` | `/api/auth/logout` | Public (Any) | Log out (clears access_token cookie) |
+| `GET` | `/api/admin/pending-owners` | Admin | List pending owners for verification |
+| `PUT` | `/api/admin/verify-owner/{id}` | Admin | Approve or reject pending owner |
+| `POST` | `/api/properties` | Owner | Create a property (with 0–3 image files) |
 | `GET` | `/api/properties` | Owner | List owner's properties |
 | `GET` | `/api/properties/{id}` | Owner | View one owned property |
-| `PUT` | `/api/properties/{id}` | Owner | Update owned property |
+| `PUT` | `/api/properties/{id}` | Owner | Update owned property (with images) |
 | `DELETE` | `/api/properties/{id}` | Owner | Delete owned property |
-| `GET` | `/api/properties/available` | Tenant | List available properties |
-| `GET` | `/api/properties/available/{id}` | Tenant | View one available property |
+| `GET` | `/api/properties/available` | Tenant | List available properties (with thumbnails) |
+| `GET` | `/api/properties/available/{id}` | Tenant | View available property (with carousel & owner phone) |
 
 ### Request Body Fields
 
-**Registration (`POST /api/auth/register`):**
-```json
-{
-  "name": "string (2-50 chars)",
-  "email": "valid email",
-  "password": "string (min 8 chars)",
-  "role": "owner | tenant"
-}
+**Registration (`POST /api/auth/register` — `multipart/form-data`):**
+```
+name: string (2-50 chars)
+email: string (valid email, unique)
+phone: string (10-15 chars, unique)
+password: string (min 8 chars)
+role: "owner" | "tenant"
+document: file (required for owner: JPG, PNG, WebP, PDF <= 5MB)
 ```
 
-**Login (`POST /api/auth/login`):**
+**Login (`POST /api/auth/login` — JSON):**
 ```json
 {
-  "email": "valid email",
+  "email": "string (optional if phone provided)",
+  "phone": "string (optional if email provided)",
   "password": "string"
 }
 ```
 
-**Property (`POST /api/properties`, `PUT /api/properties/{id}`):**
-```json
-{
-  "title": "string or null (2-100 chars, optional)",
-  "address": "string (5-100 chars, required)",
-  "property_type": "apartment | house | room | other",
-  "monthly_rent": "float > 0 (required)",
-  "availability": "available | occupied",
-  "description": "string or null (max 500 chars, optional)"
-}
+**Property (`POST /api/properties`, `PUT /api/properties/{id}` — `multipart/form-data`):**
+```
+title: string or null (2-100 chars, optional)
+address: string (5-100 chars, required)
+property_type: "apartment" | "house" | "room" | "other"
+monthly_rent: float > 0 (required)
+availability: "available" | "occupied"
+description: string or null (max 500 chars, optional)
+images: file array (0 to 3 image files: JPG, PNG, WebP <= 5MB each)
+existing_images: comma-separated URLs (for PUT)
 ```
 
 ---
@@ -461,6 +495,7 @@ This means:
 | `python: command not found` | Install Python from [python.org](https://www.python.org/) and add to PATH |
 | `ModuleNotFoundError` | Make sure the virtual environment is activated: `.\myenv\Scripts\Activate.ps1` |
 | Frontend shows blank page | Check browser console for errors. Make sure backend is running first. |
+| Owner login says "Your account is pending verification" | Log into the Admin panel (`admin@test.com`) and approve the owner |
 | Login works but dashboard is empty | You need to create properties first via "Add Property" |
 | Tenant sees no properties | An owner must create properties with `availability: "available"` first |
 
@@ -470,8 +505,8 @@ This means:
 
 - **Passwords** are hashed with Argon2 (via `pwdlib`) — never stored in plaintext
 - **JWT tokens** are stored in HttpOnly cookies — prevent JavaScript from directly reading the JWT and reduce XSS token-theft risk; they do not eliminate every security risk.
-- **No secrets in code** — all sensitive values (MongoDB URL, JWT secret) are in `.env` files which are git-ignored
-- **Role enforcement** — both backend API routes and frontend routes check user roles
+- **No secrets in code** — all sensitive values (MongoDB URL, JWT secret, Cloudinary credentials) are in `.env` files which are git-ignored
+- **Role enforcement** — both backend API routes and frontend routes check user roles (Owner, Tenant, Admin)
 - **Data isolation** — owners can only access their own properties; tenants get read-only access to available listings
 - **Input validation** — Pydantic schemas validate all API inputs; the frontend validates forms before submission
 
@@ -487,8 +522,6 @@ This means:
 - Analytics dashboard with financial reports
 - Real-time notifications via WebSockets
 - Email notifications via SMTP
-- Image upload via Cloudinary
-- Admin role and platform management panel
 - Password reset and email verification
 - Advanced search, filters, and pagination
 - Production deployment (Vercel + Render)
